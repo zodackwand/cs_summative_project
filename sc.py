@@ -20,7 +20,11 @@ font_surface = font.render("Welcome to the Snakes and Ladders", False, "White")
 clock = pg.time.Clock()
 
 # Create a player rect with x, y, width, and height
-player = pg.Rect(300, 100, 50, 50)
+player_position = [300, 100]
+
+
+player = pg.Surface((50, 50))
+player.fill((250, 0, 0))
 
 # Create a game board surface
 board_surface = pg.Surface((300, 300))
@@ -53,8 +57,25 @@ cells_positions = {
     6: (405, 230)
 
 }
-def move_player_to_cell(player, cell):
-    player.left, player.top = cells_positions[cell]
+def move_player_to_cell(cell):
+    player_position[0], player_position[1] = cells_positions[cell]
+    return player_position
+
+def handle_key_press(key, player_position):
+    if key[pg.K_1]:
+        player_position = move_player_to_cell(1)
+    elif key[pg.K_2]:
+        player_position = move_player_to_cell(2)
+    elif key[pg.K_3]:
+        player_position = move_player_to_cell(3)
+    elif key[pg.K_4]:
+        player_position = move_player_to_cell(4)
+    elif key[pg.K_5]:
+        player_position = move_player_to_cell(5)
+    elif key[pg.K_6]:
+        player_position = move_player_to_cell(6)
+    return player_position
+
 
 running = True
 while running:
@@ -68,17 +89,13 @@ while running:
     screen.blit(cell4_surface, (255, 230))
     screen.blit(cell5_surface, (330, 230))
     screen.blit(cell6_surface, (405, 230))
+    screen.blit(player, (player_position[0], player_position[1]))
     
-
-    pg.draw.rect(screen, (250, 0, 0), player)
     screen.blit(font_surface, (175, 50))
 
     # Get the keys that are pressed
     key = pg.key.get_pressed()
-    if key[pg.K_SPACE]:
-        move_player_to_cell(player, 2)
-    elif key[pg.K_3]:
-        move_player_to_cell(player, 3)
+    player_position = handle_key_press(key, player_position)
 
     # Check if the quit event is triggered
     for event in pg.event.get():
