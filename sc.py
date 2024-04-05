@@ -48,13 +48,25 @@ cell5_surface.fill((0, 0, 0))
 cell6_surface = pg.Surface((70, 70))
 cell6_surface.fill((0, 0, 0))
 
+cell7_surface = pg.Surface((70, 70))
+cell7_surface.fill((0, 0, 0))
+
+cell8_surface = pg.Surface((70, 70))
+cell8_surface.fill((0, 0, 0))
+
+cell9_surface = pg.Surface((70, 70))
+cell9_surface.fill((0, 0, 0))
+
 cells_positions = {
     cell1_surface: (255, 155),
     cell2_surface: (330, 155),
     cell3_surface: (405, 155),
     cell4_surface: (255, 230),
     cell5_surface: (330, 230),
-    cell6_surface: (405, 230)
+    cell6_surface: (405, 230),
+    cell7_surface: (255, 305),
+    cell8_surface: (330, 305),
+    cell9_surface: (405, 305)
 
 }
 def move_player_to_cell(cell):
@@ -99,6 +111,12 @@ def handle_key_press(key, player_position):
         player_position = move_player_to_cell(cell5_surface)
     elif key[pg.K_6]:
         player_position = move_player_to_cell(cell6_surface)
+    elif key[pg.K_7]:
+        player_position = move_player_to_cell(cell7_surface)
+    elif key[pg.K_8]:
+        player_position = move_player_to_cell(cell8_surface)
+    elif key[pg.K_9]:
+        player_position = move_player_to_cell(cell9_surface)
     return player_position
 
 running = True
@@ -107,12 +125,17 @@ while running:
     # Fill the screen with black, so that the previous trail of the player rect is removed
     screen.fill((0, 0, 0))
     screen.blit(board_surface, (250, 150))
-    screen.blit(cell1_surface, (255, 155))
-    screen.blit(cell2_surface, (330, 155))
-    screen.blit(cell3_surface, (405, 155))
-    screen.blit(cell4_surface, (255, 230))
-    screen.blit(cell5_surface, (330, 230))
-    screen.blit(cell6_surface, (405, 230))
+
+    screen.blit(cell1_surface, cells_positions[cell1_surface])
+    screen.blit(cell2_surface, cells_positions[cell2_surface])
+    screen.blit(cell3_surface, cells_positions[cell3_surface])
+    screen.blit(cell4_surface, cells_positions[cell4_surface])
+    screen.blit(cell5_surface, cells_positions[cell5_surface])
+    screen.blit(cell6_surface, cells_positions[cell6_surface])
+    screen.blit(cell7_surface, cells_positions[cell7_surface])
+    screen.blit(cell8_surface, cells_positions[cell8_surface])
+    screen.blit(cell9_surface, cells_positions[cell9_surface])
+
     screen.blit(player, (player_position[0], player_position[1]))
     
     screen.blit(font_surface, (175, 50))
