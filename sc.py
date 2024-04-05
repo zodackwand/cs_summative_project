@@ -36,8 +36,8 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-player = Cell(surface = [50, 50], position=[300, 100])
-player.set_color([250, 0, 0])
+player = Cell(position=[300, 100])
+player.set_color([200, 50, 50])
 
 # Create a game board surface
 board_surface = pg.Surface((300, 300))
@@ -125,7 +125,7 @@ while running:
 
     update_cells()
 
-    screen.blit(player.surface, (player.position))
+    screen.blit(player.surface, player.rect)
     
     screen.blit(font_surface, (175, 50))
 
