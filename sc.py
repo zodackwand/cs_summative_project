@@ -20,7 +20,7 @@ font_surface = font.render("Welcome to the Snakes and Ladders", False, "White")
 clock = pg.time.Clock()
 
 # Create a player rect with x, y, width, and height
-player_position = [300, 100]
+
 
 class Cell():
     def __init__(self, surface=[70, 70], rect=None, position=[0, 0]):
@@ -36,7 +36,7 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-player = Cell(surface = [50, 50],position=[300, 100])
+player = Cell(surface = [50, 50], position=[300, 100])
 player.set_color([250, 0, 0])
 
 # Create a game board surface
@@ -71,31 +71,31 @@ cell9 = Cell(position=[405, 305])
 cell9.set_color([0, 0, 0])
 
 def change_position_to_cell(cell):
-    player_position[0] = cell.rect.center[0]
-    player_position[1] = cell.rect.center[1]
-    return player_position
+    player.rect.topleft = cell.rect.topleft
+    player.position = cell.position
+    return player.rect.topleft
 
 def draw_snake(start, end):
-    # Draw a line from the center of cell1_rect to the point (370, 300) with a thickness of 5
+    # Draw a line from the center of thickness of 5
     pg.draw.line(screen, (255, 0, 0), start.rect.center, end.rect.center, 5)
 
 def draw_ladder(start, end):
-    # Draw a line from the center of cell1_rect to the point (370, 300) with a thickness of 5
+    # Draw a line from the center of thickness of 5
     pg.draw.line(screen, (0, 255, 0), start.rect.center, end.rect.center, 5)
 
 def update_cells():
-    screen.blit(cell1.surface, cell1.position)
-    screen.blit(cell2.surface, cell2.position)
-    screen.blit(cell3.surface, cell3.position)
-    screen.blit(cell4.surface, cell4.position)
-    screen.blit(cell5.surface, cell5.position)
-    screen.blit(cell6.surface, cell6.position)
-    screen.blit(cell7.surface, cell7.position)
-    screen.blit(cell8.surface, cell8.position)
-    screen.blit(cell9.surface, cell9.position)
+    screen.blit(cell1.surface, cell1.rect)
+    screen.blit(cell2.surface, cell2.rect)
+    screen.blit(cell3.surface, cell3.rect)
+    screen.blit(cell4.surface, cell4.rect)
+    screen.blit(cell5.surface, cell5.rect)
+    screen.blit(cell6.surface, cell6.rect)
+    screen.blit(cell7.surface, cell7.rect)
+    screen.blit(cell8.surface, cell8.rect)
+    screen.blit(cell9.surface, cell9.rect)
 
 
-def handle_key_press(key, player_position):
+def handle_key_press(key):
     if key[pg.K_1]:
         player.position = change_position_to_cell(cell1)
     elif key[pg.K_2]:
@@ -125,7 +125,7 @@ while running:
 
     update_cells()
 
-    screen.blit(player.surface, (player.position[0], player.position[1]))
+    screen.blit(player.surface, (player.position))
     
     screen.blit(font_surface, (175, 50))
 
@@ -134,7 +134,7 @@ while running:
 
     # Get the keys that are pressed
     key = pg.key.get_pressed()
-    player.position = handle_key_press(key, player.position)
+    player.position = handle_key_press(key)
 
     # Check if the quit event is triggered
     for event in pg.event.get():
