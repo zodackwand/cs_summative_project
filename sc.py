@@ -14,6 +14,7 @@ SCREEN_HEIGHT = 600
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption("Snakes and Ladders")
 
+# Needs automation (not manual coordinates calculations)
 cells_coordinates = [
     [255, 155],
     [330, 155],
@@ -55,16 +56,27 @@ class Entity():
         self.start_cell = start_cell
         self.end_cell = end_cell
 
-    def create(self, start_cell, end_cell):
-        pass
+    def put_on_board(self, start_cell, end_cell):
+    # Alternative: script to put it randomly on board (Ruslan's script)
+        if start_cell.contents == None and end_cell.contents == None:
+            start_cell.contents = self
+            end_cell.contents = self
+        else:
+            return 0
 
+class Snake(Entity):
+    pass
+
+class Ladder(Entity):
+    pass
 
 class Cell():
-    def __init__(self, surface=[70, 70], position=[0, 0]):
-        self.surface = pg.Surface(surface)
+    def __init__(self, size=[70, 70], position=[0, 0], contents=None):
+        self.surface = pg.Surface(size)
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
         self.position = position
+        self.contents = contents
 
     def set_color(self, array):
         self.surface.fill(array)
@@ -86,10 +98,12 @@ def change_position_to_cell(cell):
     return player.rect.topleft
 
 def draw_snake(start, end):
+    # Can be moved to Entity class
     # Draw a line from the center of thickness of 5
     pg.draw.line(screen, (255, 0, 0), start.rect.center, end.rect.center, 5)
 
 def draw_ladder(start, end):
+    # Can be moved to Entity class
     # Draw a line from the center of thickness of 5
     pg.draw.line(screen, (0, 255, 0), start.rect.center, end.rect.center, 5)
 
