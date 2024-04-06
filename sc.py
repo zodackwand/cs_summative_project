@@ -97,6 +97,8 @@ class Player():
     def set_color(self, array):
         self.surface.fill(array)
 
+    # + Wateen's script
+
 # The board consists of cells, which are the squares
 class Cell():
     def __init__(self, size=[70, 70], position=[0, 0], contents=None):
