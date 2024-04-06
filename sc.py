@@ -1,20 +1,14 @@
 import pygame as pg
 import random
+
+# Initialize the pygame module with screen size, caption and color
 pg.init()
-
-def roll_dice():
-    return random.randint(1, 6)
-
-def move_player(player, steps):
-    player.left += steps * 2
-
-
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption("Snakes and Ladders")
 
-# Needs automation (not manual coordinates calculations)
+# This is manually precalculated, but it should be done programmatically
 cells_coordinates = [
     [255, 155],
     [330, 155],
@@ -27,49 +21,83 @@ cells_coordinates = [
     [405, 305]
 ]
 
-# Create a font object to render the text
+# Create a font object to render the text on the screen
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, "White")
 clock = pg.time.Clock()
 
-# Create a player rect with x, y, width, and height
-
+# Main game board class
 class Board():
-    def __init__(self, rows, columns, cells_list={}):
+    def __init__(self, rows: int, columns: int, cells_list={}):
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
+        self.surface = pg.Surface((300, 300))
 
     def create_cells(self, coordinates_array):
-        number_of_cells = self.rows * self.columns
-        for i in range(1, number_of_cells+1):
+        number_of_cells_on_board = self.rows * self.columns
+        # Create a dictionary of cells (cells_list) with their respective positions from the coordinates_array
+        for i in range(1, number_of_cells_on_board+1):
             coordinates = coordinates_array[i-1]
+            # Each cell is an object of the Cell class
             self.cells_list[i] = Cell(position=coordinates)
             self.cells_list[i].set_color([0, 0, 0])
 
     def update_cells(self):
         for i in range(1, len(self.cells_list)+1):
+            # Update the surface (skin) of each cell on the screen
             screen.blit(self.cells_list[i].surface, self.cells_list[i].rect)
+
+    def set_color(self, array):
+        self.surface.fill(array)
+
+def generate_snakes(number_of_snakes: int):
+    # Use put_on_board() method to put the snakes on the board
+    # Ruslan's script
+    pass
+
+def generate_ladders(number_of_ladders: int):
+    # Use put_on_board() method to put the ladders on the board
+    # Ruslan's script
+    pass
 
 class Entity():
     def __init__(self, start_cell=None, end_cell=None):
+        # start_cell and end_cell are objects of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
 
     def put_on_board(self, start_cell, end_cell):
-    # Alternative: script to put it randomly on board (Ruslan's script)
+    # This should put a particular object on the board
+    # Ruslan's script
         if start_cell.contents == None and end_cell.contents == None:
-            start_cell.contents = self
-            end_cell.contents = self
-        else:
-            return 0
+            pass
 
 class Snake(Entity):
+    # Ruslan's script
     pass
 
 class Ladder(Entity):
+    # Ruslan's script
     pass
 
+class Player():
+    def __init__(self, position=[0, 0], current_cell=None):
+        self.surface = pg.Surface([70, 70])
+        self.rect = self.surface.get_rect()
+        self.rect.topleft = position
+        self.position = position
+        self.current_cell = current_cell
+
+
+    def set_position(self, array):
+        self.position = array
+        self.rect.topleft = array
+
+    def set_color(self, array):
+        self.surface.fill(array)
+
+# The board consists of cells, which are the squares
 class Cell():
     def __init__(self, size=[70, 70], position=[0, 0], contents=None):
         self.surface = pg.Surface(size)
@@ -85,30 +113,28 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-player = Cell(position=[300, 100])
-player.set_color([200, 50, 50])
-
-# Create a game board surface
-board_surface = pg.Surface((300, 300))
-board_surface.fill((255, 255, 255))
-
+# Function to change the player position to the chosen cell position
 def change_position_to_cell(cell):
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
+    player.curerrnt_cell = cell
     return player.rect.topleft
 
+# Function to draw the snake on the screen from start cell to end cell
 def draw_snake(start, end):
     # Can be moved to Entity class
-    # Draw a line from the center of thickness of 5
+    # Draw a line from the center of each cell of thickness of 5
     pg.draw.line(screen, (255, 0, 0), start.rect.center, end.rect.center, 5)
 
 def draw_ladder(start, end):
     # Can be moved to Entity class
-    # Draw a line from the center of thickness of 5
+    # Draw a line from the center of each cell of thickness of 5
     pg.draw.line(screen, (0, 255, 0), start.rect.center, end.rect.center, 5)
 
-
+# Function to handle the key press event
 def handle_key_press(key):
+    # Key "1" to "9" on keyboard will move the player to the respective cell
+    # using change_position_to_cell() function
     if key[pg.K_1]:
         player.position = change_position_to_cell(board.cells_list[1])
     elif key[pg.K_2]:
@@ -129,26 +155,33 @@ def handle_key_press(key):
         player.position = change_position_to_cell(board.cells_list[9])
     return player.position
 
+player = Player(position=[300, 100])
+player.set_color([200, 50, 50])
+
+board = Board(3, 3)
+board.set_color((255, 255, 255))
+board.create_cells(cells_coordinates)
+
+# Main game loop (same as main function)
 running = True
 while running:
 
-    # Fill the screen with black, so that the previous trail of the player rect is removed
+    # Each frame is filled with black color, so that the previous frame is not visible
     screen.fill((0, 0, 0))
-    screen.blit(board_surface, (250, 150))
-
-    board = Board(3, 3)
-    board.create_cells(cells_coordinates)
+    # Draw the board surface on the screen
+    screen.blit(board.surface, (250, 150))
     board.update_cells()
-
+    # Draw the player on the screen
     screen.blit(player.surface, player.rect)
-    
+    # Draw the font on the screen
     screen.blit(font_surface, (175, 50))
-
+    # Draw the test snakes and ladders
     draw_snake(board.cells_list[1], board.cells_list[4])
     draw_ladder(board.cells_list[2], board.cells_list[6])
 
-    # Get the keys that are pressed
+    # Get the key press event
     key = pg.key.get_pressed()
+    # Change the player position based on the key press
     player.position = handle_key_press(key)
 
     # Check if the quit event is triggered
@@ -156,7 +189,9 @@ while running:
         if event.type == pg.QUIT:
             running = False
 
+    # Update the display and set the frame rate
     pg.display.flip()
     clock.tick(60)
+# Quit the pygame module at the end
 pg.quit()
 
