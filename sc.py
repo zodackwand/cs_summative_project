@@ -46,6 +46,7 @@ class Board():
             # Each cell is an object of the Cell class
             self.cells_list[i] = Cell(position=coordinates)
             self.cells_list[i].set_color([0, 0, 0])
+            self.cells_list[i].number = i
 
     def update_cells(self):
         for i in range(1, len(self.cells_list)+1):
@@ -75,18 +76,33 @@ class Entity():
         self.end_cell = end_cell
 
     def put_on_board(self, start_cell, end_cell):
-    # This should put a particular object on the board
-    # Ruslan's script
-        if start_cell.contents == None and end_cell.contents == None:
-            pass
+        pass
 
+    def draw(self):
+        pass
+        
 class Snake(Entity):
-    # Ruslan's script
-    pass
+    def __init__(self, start_cell=None, end_cell=None):
+        super().__init__(start_cell, end_cell)
+        self.start_cell = start_cell
+        self.end_cell = end_cell
+    def put_on_board(self):
+        self.start_cell.contents = self
+        self.end_cell.contents = self
+    def draw(self):
+        pg.draw.line(screen, (255, 0, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
+
 
 class Ladder(Entity):
-    # Ruslan's script
-    pass
+    def __init__(self, start_cell=None, end_cell=None):
+        super().__init__(start_cell, end_cell)
+        self.start_cell = start_cell
+        self.end_cell = end_cell
+    def put_on_board(self):
+        self.start_cell.contents = self
+        self.end_cell.contents = self
+    def draw(self):
+        pg.draw.line(screen, (0, 255, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
@@ -96,7 +112,6 @@ class Player():
         self.position = position
         self.current_cell = current_cell
 
-
     def set_position(self, array):
         self.position = array
         self.rect.topleft = array
@@ -104,7 +119,8 @@ class Player():
     def set_color(self, array):
         self.surface.fill(array)
 
-    # + Wateen's script
+    def react_to_entity(self, entity):
+       player.position = change_position_to_cell(entity.end_cell)
 
 # The board consists of cells, which are the squares
 class Cell():
@@ -114,6 +130,7 @@ class Cell():
         self.rect.topleft = position
         self.position = position
         self.contents = contents
+        self.number = None
 
     def set_color(self, array):
         self.surface.fill(array)
@@ -126,50 +143,18 @@ class Cell():
 def change_position_to_cell(cell):
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
-    player.curerrnt_cell = cell
+    player.current_cell = cell
     return player.rect.topleft
 
-# Function to draw the snake on the screen from start cell to end cell
-def draw_snake(start, end):
-    # Can be moved to Entity class
-    # Draw a line from the center of each cell of thickness of 5
-    pg.draw.line(screen, (255, 0, 0), start.rect.center, end.rect.center, 5)
-
-def draw_ladder(start, end):
-    # Can be moved to Entity class
-    # Draw a line from the center of each cell of thickness of 5
-    pg.draw.line(screen, (0, 255, 0), start.rect.center, end.rect.center, 5)
-
-# Function to handle the key press event
-def handle_key_press(key):
-    # Key "1" to "9" on keyboard will move the player to the respective cell
-    # using change_position_to_cell() function
-    if key[pg.K_1]:
-        player.position = change_position_to_cell(board.cells_list[1])
-    elif key[pg.K_2]:
-        player.position = change_position_to_cell(board.cells_list[2])
-    elif key[pg.K_3]:
-        player.position = change_position_to_cell(board.cells_list[3])
-    elif key[pg.K_4]:
-        player.position = change_position_to_cell(board.cells_list[4])
-    elif key[pg.K_5]:
-        player.position = change_position_to_cell(board.cells_list[5])
-    elif key[pg.K_6]:
-        player.position = change_position_to_cell(board.cells_list[6])
-    elif key[pg.K_7]:
-        player.position = change_position_to_cell(board.cells_list[7])
-    elif key[pg.K_8]:
-        player.position = change_position_to_cell(board.cells_list[8])
-    elif key[pg.K_9]:
-        player.position = change_position_to_cell(board.cells_list[9])
-    return player.position
-
-player = Player(position=[300, 100])
+player = Player(position=[255, 425])
 player.set_color([200, 50, 50])
+
 
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
 board.create_cells(generate_coordinates(rows, columns, cell_size))
+
+player.current_cell = board.cells_list[1]
 
 # Main game loop (same as main function)
 running = True
@@ -185,19 +170,32 @@ while running:
     # Draw the font on the screen
     screen.blit(font_surface, (175, 50))
     # Draw the test snakes and ladders
-    draw_snake(board.cells_list[1], board.cells_list[95])
-    draw_ladder(board.cells_list[35], board.cells_list[8])
-    draw_ladder(board.cells_list[3], board.cells_list[99])
+    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[45])
+    snake1.draw()
+    snake1.put_on_board()
+    ladder1 = Ladder(start_cell=board.cells_list[1], end_cell=board.cells_list[35])
+    ladder1.draw()
+    ladder1.put_on_board()
 
-    # Get the key press event
-    key = pg.key.get_pressed()
-    # Change the player position based on the key press
-    player.position = handle_key_press(key)
+    if player.current_cell.contents != None:
+        player.react_to_entity(player.current_cell.contents)
+    
 
     # Check if the quit event is triggered
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
+        if event.type == pg.KEYDOWN:
+            # If the key is the space bar
+            if event.key == pg.K_SPACE:
+                # Change the player position based on the dice roll
+                current_cell_number = player.current_cell.number
+                next_cell_number = current_cell_number + roll_dice()
+                # Ensure that the player does not move beyond the last cell
+                if next_cell_number <= 100:
+                    player.position = change_position_to_cell(board.cells_list[next_cell_number])
+                else:
+                    player.position = change_position_to_cell(board.cells_list[100])
 
     # Update the display and set the frame rate
     pg.display.flip()
