@@ -15,13 +15,13 @@ cell_size = 25
 gap = 5
 
 # Function to generate the coordinates of the cells on the board
-def generate_coordinates(rows, columns, cell_size, start_x=255, start_y=155):
+def generate_coordinates(rows, columns, cell_size, start_x=255, start_y=425):
     cells_coordinates = []
     gap = 5
     for row in range(rows):
         for col in range(columns):
             x = start_x + (cell_size + gap) * col
-            y = start_y + (cell_size + gap) * row
+            y = start_y - (cell_size + gap) * row
             cells_coordinates.append([x, y])
     return cells_coordinates
 
@@ -64,6 +64,9 @@ def generate_ladders(number_of_ladders: int):
     # Use put_on_board() method to put the ladders on the board
     # Ruslan's script
     pass
+
+def roll_dice():
+    return random.randint(1, 6)
 
 class Entity():
     def __init__(self, start_cell=None, end_cell=None):
@@ -184,6 +187,7 @@ while running:
     # Draw the test snakes and ladders
     draw_snake(board.cells_list[1], board.cells_list[95])
     draw_ladder(board.cells_list[35], board.cells_list[8])
+    draw_ladder(board.cells_list[3], board.cells_list[99])
 
     # Get the key press event
     key = pg.key.get_pressed()
