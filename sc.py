@@ -146,14 +146,13 @@ def change_position_to_cell(cell):
     player.current_cell = cell
     return player.rect.topleft
 
-player = Player(position=[255, 425])
-player.set_color([200, 50, 50])
-
 
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
 board.create_cells(generate_coordinates(rows, columns, cell_size))
 
+player = Player(position=[255, 425])
+player.set_color([200, 50, 50])
 player.current_cell = board.cells_list[1]
 
 # Main game loop (same as main function)
@@ -170,10 +169,10 @@ while running:
     # Draw the font on the screen
     screen.blit(font_surface, (175, 50))
     # Draw the test snakes and ladders
-    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[45])
+    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
     snake1.draw()
     snake1.put_on_board()
-    ladder1 = Ladder(start_cell=board.cells_list[1], end_cell=board.cells_list[35])
+    ladder1 = Ladder(start_cell=board.cells_list[19], end_cell=board.cells_list[35])
     ladder1.draw()
     ladder1.put_on_board()
 
@@ -202,4 +201,3 @@ while running:
     clock.tick(60)
 # Quit the pygame module at the end
 pg.quit()
-
