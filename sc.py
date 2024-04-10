@@ -51,10 +51,15 @@ class Board():
             self.cells_list[i].number = i
 
     def update_cells(self):
+        font = pg.font.Font(None, 15)
         for i in range(1, len(self.cells_list)+1):
             # Update the surface (skin) of each cell on the screen
             screen.blit(self.cells_list[i].surface, self.cells_list[i].rect)
-
+            # Render the text on each cell
+            text_surface = font.render(str(i), False, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
+            screen.blit(text_surface, text_rect)
+            
     def set_color(self, array):
         self.surface.fill(array)
 
@@ -73,6 +78,7 @@ def roll_dice():
 
 class Entity(ABC):
     def __init__(self, start_cell=None, end_cell=None):
+      # start_cell and end_cell are objects of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
 
@@ -82,16 +88,6 @@ class Entity(ABC):
 
     @abstractmethod
     def draw(self):
-        pass
-        
-class Entity(ABC):
-    def __init__(self, start_cell=None, end_cell=None):
-        # start_cell and end_cell are objects of the Cell class
-        self.start_cell = start_cell
-        self.end_cell = end_cell
-
-    @abstractmethod
-    def put_on_board(self) -> None:
         pass
 
 class Snake(Entity):
@@ -118,6 +114,8 @@ class Snake(Entity):
 class Ladder(Entity):
     def __init__(self, start_cell=None, end_cell=None):
         super().__init__(start_cell, end_cell)
+        self.start_cell = start_cell
+        self.end_cell = end_cell
 
     def put_on_board(self) -> None:
         # Check if the start and end cells are available for placement
@@ -135,7 +133,7 @@ class Ladder(Entity):
         # Draw only if the ladder is placed
         if self.start_cell.contents != None and self.end_cell.contents != None and self.start_cell != self.end_cell:
             pg.draw.line(screen, (0, 255, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
-        
+  
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
         self.surface = pg.Surface([cell_size, cell_size])
@@ -178,14 +176,12 @@ def change_position_to_cell(cell):
     player.current_cell = cell
     return player.rect.topleft
 
-player = Player(position=[255, 425])
-player.set_color([200, 50, 50])
-
-
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
 board.create_cells(generate_coordinates(rows, columns, cell_size))
 
+player = Player(position=[255, 425])
+player.set_color([200, 50, 50])
 player.current_cell = board.cells_list[1]
 
 # Main game loop (same as main function)
@@ -202,12 +198,12 @@ while running:
     # Draw the font on the screen
     screen.blit(font_surface, (175, 50))
     # Draw the test snakes and ladders
-    snake1 = Snake(start_cell=board.cells_list[28], end_cell=board.cells_list[11])
-    snake1.put_on_board()
+    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
     snake1.draw()
-    ladder1 = Ladder(start_cell=board.cells_list[2], end_cell=board.cells_list[35])
-    ladder1.put_on_board()
+    snake1.put_on_board()
+    ladder1 = Ladder(start_cell=board.cells_list[19], end_cell=board.cells_list[35])
     ladder1.draw()
+    ladder1.put_on_board()
 
     if player.current_cell.contents != None:
         player.react_to_entity(player.current_cell.contents)
