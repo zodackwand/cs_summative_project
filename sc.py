@@ -1,5 +1,7 @@
 import pygame as pg
-import random
+import random as rd
+from abc import ABC, abstractmethod
+import numpy as np
 
 # Initialize the pygame module with screen size, caption and color
 pg.init()
@@ -72,43 +74,66 @@ def generate_ladders(number_of_ladders: int):
     pass
 
 def roll_dice():
-    return random.randint(1, 6)
+    return rd.randint(1, 6)
 
-class Entity():
+class Entity(ABC):
     def __init__(self, start_cell=None, end_cell=None):
-        # start_cell and end_cell are objects of the Cell class
+      # start_cell and end_cell are objects of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
 
-    def put_on_board(self, start_cell, end_cell):
+    @abstractmethod
+    def put_on_board(self):
         pass
 
+    @abstractmethod
     def draw(self):
         pass
-        
+
 class Snake(Entity):
     def __init__(self, start_cell=None, end_cell=None):
         super().__init__(start_cell, end_cell)
-        self.start_cell = start_cell
-        self.end_cell = end_cell
-    def put_on_board(self):
-        self.start_cell.contents = self
-        self.end_cell.contents = self
-    def draw(self):
-        pg.draw.line(screen, (255, 0, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
+    def put_on_board(self) -> None:
+        # Check if the start and end cells are available for placement
+        if self.start_cell.contents == None and self.end_cell.contents == None:
+            # Place the snake on the start and end cells
+            self.start_cell.contents = self
+            self.end_cell.contents = self
+        # Avoid placing the same start and end cells
+        elif self.start_cell == self.end_cell:
+            return
+        else:
+            return  
+
+    def draw(self) -> None:
+        # Draw only if the snake is placed
+        if self.start_cell.contents != None and self.end_cell.contents != None and self.start_cell != self.end_cell:
+            pg.draw.line(screen, (255, 0, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
 class Ladder(Entity):
     def __init__(self, start_cell=None, end_cell=None):
         super().__init__(start_cell, end_cell)
         self.start_cell = start_cell
         self.end_cell = end_cell
-    def put_on_board(self):
-        self.start_cell.contents = self
-        self.end_cell.contents = self
-    def draw(self):
-        pg.draw.line(screen, (0, 255, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
+    def put_on_board(self) -> None:
+        # Check if the start and end cells are available for placement
+        if self.start_cell.contents == None and self.end_cell.contents == None:
+            # Place the ladder on the start and end cells
+            self.start_cell.contents = self
+            self.end_cell.contents = self
+        # Avoid placing the same start and end cells
+        elif self.start_cell == self.end_cell:
+            return
+        else:
+            return  
+
+    def draw(self) -> None:
+        # Draw only if the ladder is placed
+        if self.start_cell.contents != None and self.end_cell.contents != None and self.start_cell != self.end_cell:
+            pg.draw.line(screen, (0, 255, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
+  
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
         self.surface = pg.Surface([cell_size, cell_size])
@@ -150,7 +175,6 @@ def change_position_to_cell(cell):
     player.position = cell.position
     player.current_cell = cell
     return player.rect.topleft
-
 
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
