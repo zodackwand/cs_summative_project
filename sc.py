@@ -199,6 +199,23 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
+class ProgressBar:
+    def __init__(self, position, size, color=(255, 255, 255), bg_color=(100, 100, 100)):
+        self.position = position
+        self.size = size
+        self.color = color
+        self.bg_color = bg_color
+        self.progress = 0  # Progress ranges from 0 to 1
+
+    def update(self, progress):
+        self.progress = progress
+
+    def draw(self, screen):
+        # Draw the background
+        pg.draw.rect(screen, self.bg_color, (*self.position, *self.size))
+        # Draw the progress bar
+        pg.draw.rect(screen, self.color, (*self.position, self.size[0]*self.progress, self.size[1]))
+
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
 board.create_cells(generate_coordinates(rows, columns, cell_size))
@@ -206,6 +223,8 @@ board.create_cells(generate_coordinates(rows, columns, cell_size))
 player = Player(position=[255, 425])
 player.set_color([200, 50, 50])
 player.current_cell = board.cells_list[1]
+
+progress_bar = ProgressBar((10, 10), (200, 20))
 
 # Main game loop (same as main function)
 running = True
@@ -233,6 +252,11 @@ while running:
     ladder1 = Ladder(start_cell=board.cells_list[19], end_cell=board.cells_list[35])
     ladder1.draw()
     ladder1.put_on_board()
+    # Create and update the progress bar
+    progress = player.current_cell.number / len(board.cells_list)
+    progress_bar.update(progress)
+    # Draw the updated progress bar on the screen
+    progress_bar.draw(screen)
 
     if player.current_cell.contents != None:
         player.react_to_entity(player.current_cell.contents)
