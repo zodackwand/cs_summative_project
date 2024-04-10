@@ -49,10 +49,15 @@ class Board():
             self.cells_list[i].number = i
 
     def update_cells(self):
+        font = pg.font.Font(None, 15)
         for i in range(1, len(self.cells_list)+1):
             # Update the surface (skin) of each cell on the screen
             screen.blit(self.cells_list[i].surface, self.cells_list[i].rect)
-
+            # Render the text on each cell
+            text_surface = font.render(str(i), False, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
+            screen.blit(text_surface, text_rect)
+            
     def set_color(self, array):
         self.surface.fill(array)
 
