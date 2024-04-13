@@ -155,55 +155,135 @@ class Ladder(Entity):
             pg.draw.line(screen, (0, 255, 0), self.start_cell.rect.center, self.end_cell.rect.center, 5)
             
 class Generator():
-    def __init__(self, rows: int, columns: int, cells_list={}):
+    def __init__(self, rows: int, columns: int, board):
         self.rows = rows
         self.columns = columns
-        self.cells_list = cells_list
+        self.cells_list = board.cells_list
         self.entity_matrices = []
+        self.snakes_count = 0
+        self.ladders_count = 0
+        self.snakes_created = False
+        self.ladders_created = False
         
     def board_cells_to_matrix(self) -> list:
         board_matrix = np.zeros((self.rows, self.columns), dtype=int)
-        for key, value in input_dict.items():
+        for key, value in self.cells_list.items():
             row = (key - 1) // self.columns
             column = (key - 1) % self.columns
             board_matrix[row, column] = key
         return np.flipud(board_matrix) 
     
     def create_null_matrices(self) -> list:
-        # generate null matrices for entities with sizes 3x1 to 4x4
+        # generate null matrices for entities with sizes 3x1 to 5x5
         null_matrices = []
-        for i in range(3, 5): 
-            for j in range(1, 5):
+        for i in range(3, 6): 
+            for j in range(1, 6):
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
     
-    def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
+    def put_entity_matrix(self, board_matrix, null_matrix, entity_type) -> bool:
         entity_rows, entity_columns = null_matrix.shape
-        row_start = rd.randint(0, self.rows - entity_rows)
-        column_start = rd.randint(0, self.columns - entity_columns)
+        row_start = rd.randint(1, self.rows - entity_rows)
+        column_start = rd.randint(1, self.columns - entity_columns)
         
-        # check if the position is availible
+        # check if the position is available
         if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
             # add the extracted matrix to the list
-            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy()) 
+            self.entity_matrices.append((board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy(), entity_type)) 
             # place the null matrix
             board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
+            
+            # Update the count of snakes and ladders placed
+            if entity_type == 'snake':
+                self.snakes_count += 1
+            elif entity_type == 'ladder':
+                self.ladders_count += 1
+                
             return True
         
         return False
     
     def smooth_placement(self) -> None:
-        # Entities cover approx. 50% of the board
-        pass
+        # cover approximately 50% of the board with entities
+        board_matrix = self.board_cells_to_matrix()
+        total_elements = board_matrix.size
+        target_elements = int(total_elements * 0.5)
+        null_matrices = self.create_null_matrices()
+        rd.shuffle(null_matrices)
+        
+        elements_covered = 0
+        for null_matrix in null_matrices:
+            if elements_covered + null_matrix.size <= target_elements:
+                # Determine the entity type based on the current counts
+                if self.snakes_count <= self.ladders_count:
+                    entity_type = 'snake'
+                else:
+                    entity_type = 'ladder'
+                
+                if self.put_entity_matrix(board_matrix, null_matrix, entity_type):
+                    elements_covered += null_matrix.size
+            else:
+                break
     
-    def get_entity_coordinates(self) -> list:
-        pass
+    def get_entity_coordinates(self, entity_matrix) -> int:
+        # get opposite corners of an entity matrix 
+        rows, columns = entity_matrix.shape
+        
+        # entity is a straight line
+        if columns == 1:
+            top_corner = entity_matrix[0, 0]
+            bottom_corner = entity_matrix[rows - 1, 0]
+        
+        # entity is a cube/rectangle   
+        else:
+            top_row = 0
+            bottom_row = rows - 1
+            
+            # randomly select a column for a top corner
+            selected_column = rd.choice([0, columns - 1])
+            # randomly select corner from the top row
+            top_corner = entity_matrix[top_row, selected_column]
+            
+            # ensure corners are taken from different columns
+            if selected_column == 0:
+                bottom_corner = entity_matrix[bottom_row, selected_column - 1]
+            else:
+                bottom_corner = entity_matrix[bottom_row, 0]
+                
+        return top_corner, bottom_corner
     
-    def create_snakes(self):
-        pass
+    def create_snakes(self) -> None:
+        # ensure method is called only once
+        if not self.snakes_created:
+            self.smooth_placement()
+            
+            for entity_matrix, entity_type in self.entity_matrices:
+                if entity_type == 'snake':
+                    top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
+                    snake = Snake(start_cell=self.cells_list[top_coordinate], end_cell=self.cells_list[bottom_coordinate])
+                    snake.put_on_board()
+                    snake.draw()
+                    
+                    # snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
+            
+            # block the method once it is called  
+            self.snakes_created = True
+
     
-    def create_ladders(self):
-        pass
+    def create_ladders(self) -> None:
+        # ensure method is called only once
+        if not self.ladders_created:
+            self.smooth_placement()
+            
+            for entity_matrix, entity_type in self.entity_matrices:
+                if entity_type == 'ladder':
+                    top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
+                    ladder = Ladder(start_cell=self.cells_list[bottom_coordinate], end_cell=self.cells_list[top_coordinate])
+                    ladder.put_on_board()
+                    ladder.draw()
+            
+            # block the method once it is called  
+            self.ladders_created = True
   
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
@@ -267,32 +347,49 @@ player.current_cell = board.cells_list[1]
 
 progress_bar = ProgressBar((10, 10), (200, 20))
 
+# Each frame is filled with black color, so that the previous frame is not visible
+screen.fill((0, 0, 0))
+# Draw the board surface on the screen
+screen.blit(board.surface, (250, 150))
+board.update_cells()
+# Draw the player on the screen
+screen.blit(player.surface, player.rect)
+# Draw the font on the screen
+screen.blit(font_surface, (175, 50))
+# Draw the timer on the screen
+draw_timer()
+# Draw the shortest distance on the screen
+draw_shortest_distance()
+# Draw the score on the screen
+draw_score()
+# Generate snakes and ladders
+generator = Generator(10, 10, board)
+generator.create_snakes()
+generator.create_ladders()
+
 # Main game loop (same as main function)
 running = True
 while running:
 
-    # Each frame is filled with black color, so that the previous frame is not visible
-    screen.fill((0, 0, 0))
-    # Draw the board surface on the screen
-    screen.blit(board.surface, (250, 150))
-    board.update_cells()
-    # Draw the player on the screen
-    screen.blit(player.surface, player.rect)
-    # Draw the font on the screen
-    screen.blit(font_surface, (175, 50))
-    # Draw the timer on the screen
-    draw_timer()
-    # Draw the shortest distance on the screen
-    draw_shortest_distance()
-    # Draw the score on the screen
-    draw_score()
-    # Draw the test snakes and ladders
-    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
-    snake1.draw()
-    snake1.put_on_board()
-    ladder1 = Ladder(start_cell=board.cells_list[19], end_cell=board.cells_list[35])
-    ladder1.draw()
-    ladder1.put_on_board()
+    # # Each frame is filled with black color, so that the previous frame is not visible
+    # screen.fill((0, 0, 0))
+    # # Draw the board surface on the screen
+    # screen.blit(board.surface, (250, 150))
+    # board.update_cells()
+    # # Draw the player on the screen
+    # screen.blit(player.surface, player.rect)
+    # # Draw the font on the screen
+    # screen.blit(font_surface, (175, 50))
+    # # Draw the timer on the screen
+    # draw_timer()
+    # # Draw the shortest distance on the screen
+    # draw_shortest_distance()
+    # # Draw the score on the screen
+    # draw_score()
+    # # Generate snakes and ladders
+    # generator = Generator(10, 10, board)
+    # generator.create_snakes()
+    # generator.create_ladders()
     # Create and update the progress bar
     progress = player.current_cell.number / len(board.cells_list)
     progress_bar.update(progress)
