@@ -183,8 +183,8 @@ class Generator():
     
     def put_entity_matrix(self, board_matrix, null_matrix, entity_type) -> bool:
         entity_rows, entity_columns = null_matrix.shape
-        row_start = rd.randint(1, self.rows - entity_rows)
-        column_start = rd.randint(1, self.columns - entity_columns)
+        row_start = rd.randint(0, self.rows - entity_rows)
+        column_start = rd.randint(0, self.columns - entity_columns)
         
         # check if the position is available
         if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
@@ -259,8 +259,14 @@ class Generator():
             
             for entity_matrix, entity_type in self.entity_matrices:
                 if entity_type == 'snake':
+                    # get the start and end coordinates of the entity matrix
                     top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
-                    snake = Snake(start_cell=self.cells_list[top_coordinate], end_cell=self.cells_list[bottom_coordinate])
+                    # access the Cell class objects directly using the coordinates
+                    start_cell = self.cells_list[top_coordinate]
+                    end_cell = self.cells_list[bottom_coordinate]
+                    # create and initialize the Snake instance with Cell objects
+                    snake = Snake(start_cell, end_cell)
+                    # Place and draw the snake
                     snake.put_on_board()
                     snake.draw()
                     
@@ -277,8 +283,14 @@ class Generator():
             
             for entity_matrix, entity_type in self.entity_matrices:
                 if entity_type == 'ladder':
+                    # get the start and end coordinates of the entity matrix
                     top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
-                    ladder = Ladder(start_cell=self.cells_list[bottom_coordinate], end_cell=self.cells_list[top_coordinate])
+                    # access the Cell class objects directly using the coordinates
+                    start_cell = self.cells_list[bottom_coordinate]
+                    end_cell = self.cells_list[top_coordinate]
+                    # create and initialize the Snake instance with Cell objects
+                    ladder = Ladder(start_cell, end_cell)
+                    # Place and draw the snake
                     ladder.put_on_board()
                     ladder.draw()
             
@@ -347,49 +359,29 @@ player.current_cell = board.cells_list[1]
 
 progress_bar = ProgressBar((10, 10), (200, 20))
 
-# Each frame is filled with black color, so that the previous frame is not visible
-screen.fill((0, 0, 0))
-# Draw the board surface on the screen
-screen.blit(board.surface, (250, 150))
-board.update_cells()
-# Draw the player on the screen
-screen.blit(player.surface, player.rect)
-# Draw the font on the screen
-screen.blit(font_surface, (175, 50))
-# Draw the timer on the screen
-draw_timer()
-# Draw the shortest distance on the screen
-draw_shortest_distance()
-# Draw the score on the screen
-draw_score()
-# Generate snakes and ladders
-generator = Generator(10, 10, board)
-generator.create_snakes()
-generator.create_ladders()
-
 # Main game loop (same as main function)
 running = True
 while running:
 
-    # # Each frame is filled with black color, so that the previous frame is not visible
-    # screen.fill((0, 0, 0))
-    # # Draw the board surface on the screen
-    # screen.blit(board.surface, (250, 150))
-    # board.update_cells()
-    # # Draw the player on the screen
-    # screen.blit(player.surface, player.rect)
-    # # Draw the font on the screen
-    # screen.blit(font_surface, (175, 50))
-    # # Draw the timer on the screen
-    # draw_timer()
-    # # Draw the shortest distance on the screen
-    # draw_shortest_distance()
-    # # Draw the score on the screen
-    # draw_score()
-    # # Generate snakes and ladders
-    # generator = Generator(10, 10, board)
-    # generator.create_snakes()
-    # generator.create_ladders()
+    # Each frame is filled with black color, so that the previous frame is not visible
+    screen.fill((0, 0, 0))
+    # Draw the board surface on the screen
+    screen.blit(board.surface, (250, 150))
+    board.update_cells()
+    # Draw the player on the screen
+    screen.blit(player.surface, player.rect)
+    # Draw the font on the screen
+    screen.blit(font_surface, (175, 50))
+    # Draw the timer on the screen
+    draw_timer()
+    # Draw the shortest distance on the screen
+    draw_shortest_distance()
+    # Draw the score on the screen
+    draw_score()
+    # Generate snakes and ladders
+    generator = Generator(10, 10, board)
+    generator.create_snakes()
+    generator.create_ladders()
     # Create and update the progress bar
     progress = player.current_cell.number / len(board.cells_list)
     progress_bar.update(progress)
@@ -398,7 +390,6 @@ while running:
 
     if player.current_cell.contents != None:
         player.react_to_entity(player.current_cell.contents)
-    
 
     # Check if the quit event is triggered
     for event in pg.event.get():
