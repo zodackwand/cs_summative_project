@@ -241,7 +241,7 @@ class Player():
         self.surface.fill(array)
 
     def react_to_entity(self, entity):
-       self.position = change_position_to_cell(entity.end_cell)
+       self.position = change_position_to_cell(self, entity.end_cell)
 
 # The board consists of cells, which are the squares
 class Cell():
