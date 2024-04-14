@@ -122,16 +122,6 @@ class Board():
     def set_color(self, array):
         self.surface.fill(array)
 
-def generate_snakes(number_of_snakes: int):
-    # Use put_on_board() method to put the snakes on the board
-    # Ruslan's script
-    pass
-
-def generate_ladders(number_of_ladders: int):
-    # Use put_on_board() method to put the ladders on the board
-    # Ruslan's script
-    pass
-
 def roll_dice():
     return rd.randint(1, 6)
 
@@ -183,6 +173,57 @@ class Ladder(Entity):
         if self.start_cell.contents == None and self.end_cell.contents == None:
             self.start_cell.contents = self
             self.end_cell.contents = self
+            
+class Generator():
+    def __init__(self, rows: int, columns: int, cells_list={}):
+        self.rows = rows
+        self.columns = columns
+        self.cells_list = cells_list
+        self.entity_matrices = []
+        
+    def board_cells_to_matrix(self) -> list:
+        board_matrix = np.zeros((self.rows, self.columns), dtype=int)
+        for key, value in input_dict.items():
+            row = (key - 1) // self.columns
+            column = (key - 1) % self.columns
+            board_matrix[row, column] = key
+        return np.flipud(board_matrix) 
+    
+    def create_null_matrices(self) -> list:
+        # generate null matrices for entities with sizes 3x1 to 4x4
+        null_matrices = []
+        for i in range(3, 5): 
+            for j in range(1, 5):
+                null_matrices.append(np.zeros((i, j)))
+        return null_matrices
+    
+    def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
+        entity_rows, entity_columns = null_matrix.shape
+        row_start = rd.randint(0, self.rows - entity_rows)
+        column_start = rd.randint(0, self.columns - entity_columns)
+        
+        # check if the position is availible
+        if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
+            # add the extracted matrix to the list
+            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy()) 
+            # place the null matrix
+            board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
+            return True
+        
+        return False
+    
+    def smooth_placement(self) -> None:
+        # Entities cover approx. 50% of the board
+        pass
+    
+    def get_entity_coordinates(self) -> list:
+        pass
+    
+    def create_snakes(self):
+        pass
+    
+    def create_ladders(self):
+        pass
   
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
