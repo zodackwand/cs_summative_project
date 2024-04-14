@@ -2,6 +2,7 @@ import pygame as pg
 import random as rd
 from abc import ABC, abstractmethod
 import numpy as np
+import time
 
 # Initialize the pygame module with screen size, caption and color
 pg.init()
@@ -16,7 +17,6 @@ columns = 10
 cell_size = 25
 gap = 5
 
-# Utils
 # Function to generate the coordinates of the cells on the board
 def generate_coordinates(rows, columns, cell_size, start_x=255, start_y=425):
     cells_coordinates = []
@@ -35,13 +35,6 @@ def change_position_to_cell(cell):
     player.current_cell = cell
     return player.rect.topleft
 
-# Function to draw the timer on the screen. value is the time in seconds.
-def draw_timer(value=0):
-    font = pg.font.Font(None, 15)  # Create a font object
-    text_surface = font.render(f"Timer: {value}", True, (255, 255, 255))  # Create a surface with the text
-    text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 10))  # Position the text at the top right corner of the screen
-    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-
 # Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
 def draw_shortest_distance(value=0):
     font = pg.font.Font(None, 15)  # Create a font object
@@ -55,6 +48,27 @@ def draw_score(value=0):
     text_surface = font.render(f"Score: {value}", True, (255, 255, 255))  # Create a surface with the text
     text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
+# Function to draw the past games time on the screen. past_games_time is a list of times.
+def draw_past_games_time(past_games_time):
+    font = pg.font.Font(None, 15)  # Create a font object
+    y_position = 40
+    # Sort the past games time in ascending order
+    past_games_time = quicksort(past_games_time)
+    for i, time in enumerate(past_games_time):
+        text_surface = font.render(f"Game {i+1} time: {time}", True, (255, 255, 255))  # Create a surface with the text
+        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
+        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+        y_position += 10
+
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
 
 
 # Create a font object to render the text on the screen
@@ -216,6 +230,21 @@ class ProgressBar:
         # Draw the progress bar
         pg.draw.rect(screen, self.color, (*self.position, self.size[0]*self.progress, self.size[1]))
 
+class Timer:
+    def __init__(self):
+        self.start_time = time.time()
+    def get_elapsed_time(self):
+        # Return the elapsed time in seconds (int)
+        return int(time.time() - self.start_time)
+    def draw(self):
+        font = pg.font.Font(None, 15)
+        text_surface = font.render(f"Timer: {self.get_elapsed_time()}", True, (255, 255, 255))
+        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 10))
+        screen.blit(text_surface, text_rect)
+    def reset(self):
+        self.start_time = time.time()
+
+
 board = Board(rows, columns)
 board.set_color((255, 255, 255))
 board.create_cells(generate_coordinates(rows, columns, cell_size))
@@ -225,6 +254,8 @@ player.set_color([200, 50, 50])
 player.current_cell = board.cells_list[1]
 
 progress_bar = ProgressBar((10, 10), (200, 20))
+timer = Timer()
+past_games_time = []
 
 # Main game loop (same as main function)
 running = True
@@ -240,7 +271,7 @@ while running:
     # Draw the font on the screen
     screen.blit(font_surface, (175, 50))
     # Draw the timer on the screen
-    draw_timer()
+    timer.draw()
     # Draw the shortest distance on the screen
     draw_shortest_distance()
     # Draw the score on the screen
@@ -257,6 +288,7 @@ while running:
     progress_bar.update(progress)
     # Draw the updated progress bar on the screen
     progress_bar.draw(screen)
+    draw_past_games_time(past_games_time)
 
     if player.current_cell.contents != None:
         player.react_to_entity(player.current_cell.contents)
@@ -277,6 +309,14 @@ while running:
                     player.position = change_position_to_cell(board.cells_list[next_cell_number])
                 else:
                     player.position = change_position_to_cell(board.cells_list[100])
+            # Reset button
+            if event.key == pg.K_r:
+                # Record the time taken if only the player reaches the last cell
+                if player.current_cell == board.cells_list[100]:
+                    past_games_time.append(timer.get_elapsed_time())
+                player.position = change_position_to_cell(board.cells_list[1])
+                timer.reset()
+
 
     # Update the display and set the frame rate
     pg.display.flip()
