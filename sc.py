@@ -61,8 +61,8 @@ def draw_shortest_distance(value=0):
 
 
 # Function to draw the score on the screen. value is the score.
-def draw_score(player, points=0):
-    value = player.update_score(points)
+def draw_score(player):
+    value = player.update_score()
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(
@@ -70,14 +70,14 @@ def draw_score(player, points=0):
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 
-# Function to draw the past games time on the screen. past_games_time is a list of times.
-def draw_past_games_time(past_games_time):
+# Function to draw the past games scores on the screen. past_games_scores is a list of times.
+def draw_past_games_scores(past_games_scores):
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
-    # Sort the past games time in ascending order
-    past_games_time = quicksort(past_games_time)
-    for i, time in enumerate(past_games_time):
-        text_surface = font.render(f"Game {i + 1} time: {time}", True,
+    # Sort the past games scores in ascending order
+    past_games_scores = quicksort(past_games_scores)
+    for i, score in enumerate(past_games_scores):
+        text_surface = font.render(f"Game {i + 1} score: {score}", True,
                                    Color.WHITE.value)  # Create a surface with the text
         text_rect = text_surface.get_rect(
             topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
@@ -145,11 +145,12 @@ def roll_dice():
 class Entity(ABC):
     """Represents an entity on the board."""
 
-    def __init__(self, start_cell=None, end_cell=None, color=None):
+    def __init__(self, start_cell=None, end_cell=None, color=None, snake_ladder=0):
         # start_cell and end_cell are objects of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
         self.color = color
+        self.snake_ladder = snake_ladder
 
     @abstractmethod
     def put_on_board(self):
@@ -165,7 +166,7 @@ class Snake(Entity):
     """Represents a snake on the board."""
 
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell, Color.RED.value)
+        super().__init__(start_cell, end_cell, Color.RED.value, -1)
 
     def draw(self):
         """Draws the snake on the screen."""
@@ -182,7 +183,7 @@ class Ladder(Entity):
     """Represents a ladder on the board."""
 
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell, Color.GREEN.value)
+        super().__init__(start_cell, end_cell, Color.GREEN.value, 1)
 
     def draw(self):
         """Draws the ladder on the screen."""
@@ -262,6 +263,7 @@ class Player():
         self.position = position
         self.current_cell = current_cell
         self.score = tot_score
+        self.entity_encountered = True
         self.num_snakes = 0
 
     def set_position(self, array):
@@ -272,10 +274,19 @@ class Player():
         self.surface.fill(array)
 
     def react_to_entity(self, entity):
-        self.position = change_position_to_cell(self, entity.end_cell)
+        if not self.entity_encountered:
+            if entity.snake_ladder < 0:
+                self.position = change_position_to_cell(self, entity.end_cell)
+                self.snake_encountered()
+                self.update_score(-5)
+                self.entity_encountered = True
+            elif entity.snake_ladder > 0:
+                self.position = change_position_to_cell(self, entity.end_cell)
+                self.update_score(+5)
+                self.entity_encountered = True
 
     # A method to update the player's score during the game to for display in the end
-    def update_score(self, points: int):
+    def update_score(self, points: int = 0):
         self.score += points
         return self.score
 
@@ -350,7 +361,7 @@ def main():
 
     progress_bar = ProgressBar((10, 10), (200, 20))
     timer = Timer()
-    past_games_time = []
+    past_games_scores = []
 
     snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
     snake1.put_on_board()
@@ -362,9 +373,9 @@ def main():
 
     running = True
     while running:
-        running = handle_events(player, board, timer, past_games_time)
+        running = handle_events(player, board, timer, past_games_scores)
         if running:
-            draw_game_state(player, board, timer, past_games_time, board.snakes, board.ladders, progress_bar)
+            draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
             update_game_state(player)
 
 
@@ -375,7 +386,7 @@ def main():
     pg.quit()
 
 
-def handle_events(player, board, timer, past_games_time):
+def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -383,6 +394,7 @@ def handle_events(player, board, timer, past_games_time):
         if event.type == pg.KEYDOWN:
             # If the key is the space bar
             if event.key == pg.K_SPACE:
+                player.entity_encountered = False
                 # Change the player position based on the dice roll
                 moves = roll_dice()
                 current_cell_number = player.current_cell.number
@@ -396,7 +408,7 @@ def handle_events(player, board, timer, past_games_time):
             if event.key == pg.K_r:
                 # Record the time taken if only the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
-                    past_games_time.append(timer.get_elapsed_time())
+                    past_games_scores.append(player.update_score())
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.update_score((-1 * player.score) + 100)
                 timer.reset()
@@ -408,7 +420,8 @@ def update_game_state(player):
         player.react_to_entity(player.current_cell.contents)
 
 
-def draw_game_state(player, board, timer, past_games_time, snakes, ladders, progress_bar):
+
+def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
     screen.fill((0, 0, 0))
@@ -438,7 +451,7 @@ def draw_game_state(player, board, timer, past_games_time, snakes, ladders, prog
     progress_bar.update(progress)
     # Draw the updated progress bar on the screen
     progress_bar.draw(screen)
-    draw_past_games_time(past_games_time)
+    draw_past_games_scores(past_games_scores)
 
 
 if __name__ == "__main__":
