@@ -18,12 +18,14 @@ COLUMNS = 10
 CELL_SIZE = 25
 GAP = 5
 
+
 class Color(Enum):
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
+
 
 PLAYER_START_POSITION = [255, 425]
 
@@ -39,6 +41,7 @@ def generate_coordinates(rows, columns, cell_size, start_x=255, start_y=425):
             cells_coordinates.append([x, y])
     return cells_coordinates
 
+
 # Function to change the player position to the chosen cell position
 def change_position_to_cell(player, cell):
     player.rect.topleft = cell.rect.topleft
@@ -46,31 +49,41 @@ def change_position_to_cell(player, cell):
     player.current_cell = cell
     return player.rect.topleft
 
+
 # Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
 def draw_shortest_distance(value=0):
     font = pg.font.Font(None, 15)  # Create a font object
-    text_surface = font.render(f"Minimum possible number of steps: {value}", True, Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 20))  # Position the text at the top right corner of the screen
+    text_surface = font.render(f"Minimum possible number of steps: {value}", True,
+                               Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(
+        topright=(SCREEN_WIDTH - 10, 20))  # Position the text at the top right corner of the screen
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
 
 # Function to draw the score on the screen. value is the score.
-def draw_score(value=0):
+def draw_score(player):
+    value = player.update_score()
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
+    text_rect = text_surface.get_rect(
+        topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
-# Function to draw the past games time on the screen. past_games_time is a list of times.
-def draw_past_games_time(past_games_time):
+
+# Function to draw the past games scores on the screen. past_games_scores is a list of times.
+def draw_past_games_scores(past_games_scores):
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
-    # Sort the past games time in ascending order
-    past_games_time = quicksort(past_games_time)
-    for i, time in enumerate(past_games_time):
-        text_surface = font.render(f"Game {i+1} time: {time}", True, Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
+    # Sort the past games scores in ascending order
+    past_games_scores = quicksort(past_games_scores)
+    for i, score in enumerate(past_games_scores):
+        text_surface = font.render(f"Game {i + 1} score: {score}", True,
+                                   Color.WHITE.value)  # Create a surface with the text
+        text_rect = text_surface.get_rect(
+            topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
+
 
 def quicksort(arr):
     if len(arr) <= 1:
@@ -87,14 +100,16 @@ font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
 clock = pg.time.Clock()
 
+
 # Main game board class
 class Board():
     """Represents the game board."""
+
     def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE, gap=GAP):
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
-        self.surface = pg.Surface((rows * (cell_size + gap) + gap, rows * (cell_size+ gap) + gap))
+        self.surface = pg.Surface((rows * (cell_size + gap) + gap, rows * (cell_size + gap) + gap))
         self.snakes = []
         self.ladders = []
 
@@ -102,8 +117,8 @@ class Board():
         """Creates the cells for the board."""
         number_of_cells_on_board = self.rows * self.columns
         # Create a dictionary of cells (cells_list) with their respective positions from the coordinates_array
-        for i in range(1, number_of_cells_on_board+1):
-            coordinates = coordinates_array[i-1]
+        for i in range(1, number_of_cells_on_board + 1):
+            coordinates = coordinates_array[i - 1]
             # Each cell is an object of the Cell class
             self.cells_list[i] = Cell(position=coordinates)
             self.cells_list[i].set_color(Color.BLACK.value)
@@ -111,26 +126,31 @@ class Board():
 
     def update_cells(self):
         font = pg.font.Font(None, 15)
-        for i in range(1, len(self.cells_list)+1):
+        for i in range(1, len(self.cells_list) + 1):
             # Update the surface (skin) of each cell on the screen
             screen.blit(self.cells_list[i].surface, self.cells_list[i].rect)
             # Render the text on each cell
             text_surface = font.render(str(i), False, Color.WHITE.value)
             text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
             screen.blit(text_surface, text_rect)
-            
+
     def set_color(self, array):
         self.surface.fill(array)
+
 
 def roll_dice():
     return rd.randint(1, 6)
 
+
 class Entity(ABC):
     """Represents an entity on the board."""
-    def __init__(self, start_cell=None, end_cell=None):
-      # start_cell and end_cell are objects of the Cell class
+
+    def __init__(self, start_cell=None, end_cell=None, color=None, snake_ladder=0):
+        # start_cell and end_cell are objects of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
+        self.color = color
+        self.snake_ladder = snake_ladder
 
     @abstractmethod
     def put_on_board(self):
@@ -144,9 +164,9 @@ class Entity(ABC):
 
 class Snake(Entity):
     """Represents a snake on the board."""
+
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell)
-        self.color = Color.RED.value
+        super().__init__(start_cell, end_cell, Color.RED.value, -1)
 
     def draw(self):
         """Draws the snake on the screen."""
@@ -158,11 +178,12 @@ class Snake(Entity):
             self.start_cell.contents = self
             self.end_cell.contents = self
 
+
 class Ladder(Entity):
     """Represents a ladder on the board."""
+
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell)
-        self.color = Color.GREEN.value
+        super().__init__(start_cell, end_cell, Color.GREEN.value, 1)
 
     def draw(self):
         """Draws the ladder on the screen."""
@@ -173,65 +194,77 @@ class Ladder(Entity):
         if self.start_cell.contents == None and self.end_cell.contents == None:
             self.start_cell.contents = self
             self.end_cell.contents = self
-            
+
+
 class Generator():
     def __init__(self, rows: int, columns: int, cells_list={}):
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
         self.entity_matrices = []
-        
+
     def board_cells_to_matrix(self) -> list:
         board_matrix = np.zeros((self.rows, self.columns), dtype=int)
         for key, value in input_dict.items():
             row = (key - 1) // self.columns
             column = (key - 1) % self.columns
             board_matrix[row, column] = key
-        return np.flipud(board_matrix) 
-    
+        return np.flipud(board_matrix)
+
     def create_null_matrices(self) -> list:
         # generate null matrices for entities with sizes 3x1 to 4x4
         null_matrices = []
-        for i in range(3, 5): 
+        for i in range(3, 5):
             for j in range(1, 5):
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
-    
+
     def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
         entity_rows, entity_columns = null_matrix.shape
         row_start = rd.randint(0, self.rows - entity_rows)
         column_start = rd.randint(0, self.columns - entity_columns)
-        
+
         # check if the position is availible
         if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
             # add the extracted matrix to the list
-            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy()) 
+            self.entity_matrices.append(
+                board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy())
             # place the null matrix
             board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
             return True
-        
+
         return False
-    
+
     def smooth_placement(self) -> None:
         # Entities cover approx. 50% of the board
         pass
-    
+
     def get_entity_coordinates(self) -> list:
         pass
-    
+
     def create_snakes(self):
         pass
-    
+
     def create_ladders(self):
         pass
-  
+
+
 class Player():
-    def __init__(self, position=[0, 0], current_cell=None):
+    """
+        This class is for objects player in the game
+        tot_score : the total score of the player
+        snakes_encountered: how many snakes the player encounters during the game (if 0 points will double in the end)
+    """
+
+    def __init__(self, position=[0, 0], current_cell=None, tot_score=100):
         self.surface = pg.Surface([CELL_SIZE, CELL_SIZE])
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
         self.position = position
         self.current_cell = current_cell
+        self.score = tot_score
+        self.entity_encountered = True
+        self.num_snakes = 0
 
     def set_position(self, array):
         self.position = array
@@ -241,7 +274,26 @@ class Player():
         self.surface.fill(array)
 
     def react_to_entity(self, entity):
-       self.position = change_position_to_cell(self, entity.end_cell)
+        if not self.entity_encountered:
+            if entity.snake_ladder < 0:
+                self.position = change_position_to_cell(self, entity.end_cell)
+                self.snake_encountered()
+                self.update_score(-5)
+                self.entity_encountered = True
+            elif entity.snake_ladder > 0:
+                self.position = change_position_to_cell(self, entity.end_cell)
+                self.update_score(+5)
+                self.entity_encountered = True
+
+    # A method to update the player's score during the game to for display in the end
+    def update_score(self, points: int = 0):
+        self.score += points
+        return self.score
+
+    def snake_encountered(self):
+        self.num_snakes += 1
+        return True
+
 
 # The board consists of cells, which are the squares
 class Cell():
@@ -260,6 +312,7 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
+
 class ProgressBar:
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
@@ -275,21 +328,26 @@ class ProgressBar:
         # Draw the background
         pg.draw.rect(screen, self.bg_color, (*self.position, *self.size))
         # Draw the progress bar
-        pg.draw.rect(screen, self.color, (*self.position, self.size[0]*self.progress, self.size[1]))
+        pg.draw.rect(screen, self.color, (*self.position, self.size[0] * self.progress, self.size[1]))
+
 
 class Timer:
     def __init__(self):
         self.start_time = time.time()
+
     def get_elapsed_time(self):
         # Return the elapsed time in seconds (int)
         return int(time.time() - self.start_time)
+
     def draw(self):
         font = pg.font.Font(None, 15)
         text_surface = font.render(f"Timer: {self.get_elapsed_time()}", True, Color.WHITE.value)
         text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 10))
         screen.blit(text_surface, text_rect)
+
     def reset(self):
         self.start_time = time.time()
+
 
 def main():
     """Main game loop."""
@@ -303,7 +361,7 @@ def main():
 
     progress_bar = ProgressBar((10, 10), (200, 20))
     timer = Timer()
-    past_games_time = []
+    past_games_scores = []
 
     snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
     snake1.put_on_board()
@@ -315,10 +373,11 @@ def main():
 
     running = True
     while running:
-        running = handle_events(player, board, timer, past_games_time)
+        running = handle_events(player, board, timer, past_games_scores)
         if running:
-            draw_game_state(player, board, timer, past_games_time, board.snakes, board.ladders, progress_bar)
+            draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
             update_game_state(player)
+
 
         # Update the display and set the frame rate
         pg.display.flip()
@@ -326,36 +385,43 @@ def main():
     # Quit the pygame module at the end
     pg.quit()
 
-def handle_events(player, board, timer, past_games_time):
+
+def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
-            if event.type == pg.QUIT:
-                return False
-            if event.type == pg.KEYDOWN:
-                # If the key is the space bar
-                if event.key == pg.K_SPACE:
-                    # Change the player position based on the dice roll
-                    current_cell_number = player.current_cell.number
-                    next_cell_number = current_cell_number + roll_dice()
-                    # Ensure that the player does not move beyond the last cell
-                    if next_cell_number <= 100:
-                        player.position = change_position_to_cell(player, board.cells_list[next_cell_number])
-                    else:
-                        player.position = change_position_to_cell(player, board.cells_list[100])
-                # Reset button
-                if event.key == pg.K_r:
-                    # Record the time taken if only the player reaches the last cell
-                    if player.current_cell == board.cells_list[100]:
-                        past_games_time.append(timer.get_elapsed_time())
-                    player.position = change_position_to_cell(player, board.cells_list[1])
-                    timer.reset()
+        if event.type == pg.QUIT:
+            return False
+        if event.type == pg.KEYDOWN:
+            # If the key is the space bar
+            if event.key == pg.K_SPACE:
+                player.entity_encountered = False
+                # Change the player position based on the dice roll
+                moves = roll_dice()
+                current_cell_number = player.current_cell.number
+                next_cell_number = current_cell_number + moves
+                # Ensure that the player does not move beyond the last cell
+                if next_cell_number <= 100:
+                    player.position = change_position_to_cell(player, board.cells_list[next_cell_number])
+                else:
+                    player.position = change_position_to_cell(player, board.cells_list[100])
+            # Reset button
+            if event.key == pg.K_r:
+                # Record the time taken if only the player reaches the last cell
+                if player.current_cell == board.cells_list[100]:
+                    past_games_scores.append(player.update_score())
+                player.position = change_position_to_cell(player, board.cells_list[1])
+                player.update_score((-1 * player.score) + 100)
+                timer.reset()
     return True
 
+
 def update_game_state(player):
-    if player.current_cell.contents != None:
+    if player.current_cell.contents is not None:
         player.react_to_entity(player.current_cell.contents)
 
-def draw_game_state(player, board, timer, past_games_time, snakes, ladders, progress_bar):
+
+
+def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
     screen.fill((0, 0, 0))
@@ -371,21 +437,22 @@ def draw_game_state(player, board, timer, past_games_time, snakes, ladders, prog
     # Draw the shortest distance on the screen
     draw_shortest_distance()
     # Draw the score on the screen
-    draw_score()
+    draw_score(player)
     # Draw the test snakes and ladders
-    
+
     for snake in board.snakes:
         snake.draw()
-    
+
     for ladder in board.ladders:
         ladder.draw()
-    
+
     # Create and update the progress bar
     progress = player.current_cell.number / len(board.cells_list)
     progress_bar.update(progress)
     # Draw the updated progress bar on the screen
     progress_bar.draw(screen)
-    draw_past_games_time(past_games_time)
+    draw_past_games_scores(past_games_scores)
+
 
 if __name__ == "__main__":
     main()
