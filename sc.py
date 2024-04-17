@@ -181,7 +181,7 @@ class Generator():
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
     
-    def put_entity_matrix(self, board_matrix, null_matrix, entity_type) -> bool:
+    def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
         entity_rows, entity_columns = null_matrix.shape
         row_start = rd.randint(0, self.rows - entity_rows)
         column_start = rd.randint(0, self.columns - entity_columns)
@@ -189,15 +189,15 @@ class Generator():
         # check if the position is available
         if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
             # add the extracted matrix to the list
-            self.entity_matrices.append((board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy(), entity_type)) 
+            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy()) 
             # place the null matrix
             board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
             
-            # Update the count of snakes and ladders placed
-            if entity_type == 'snake':
-                self.snakes_count += 1
-            elif entity_type == 'ladder':
-                self.ladders_count += 1
+            # # Update the count of snakes and ladders placed
+            # if entity_type == 'snake':
+            #     self.snakes_count += 1
+            # elif entity_type == 'ladder':
+            #     self.ladders_count += 1
                 
             return True
         
@@ -215,15 +215,17 @@ class Generator():
         for null_matrix in null_matrices:
             if elements_covered + null_matrix.size <= target_elements:
                 # Determine the entity type based on the current counts
-                if self.snakes_count <= self.ladders_count:
-                    entity_type = 'snake'
-                else:
-                    entity_type = 'ladder'
+                # if self.snakes_count <= self.ladders_count:
+                #     entity_type = 'snake'
+                # else:
+                #     entity_type = 'ladder'
                 
-                if self.put_entity_matrix(board_matrix, null_matrix, entity_type):
+                if self.put_entity_matrix(board_matrix, null_matrix):
                     elements_covered += null_matrix.size
             else:
                 break
+            
+        self.occupied_board_matrix = board_matrix
     
     def get_entity_coordinates(self, entity_matrix) -> int:
         # get opposite corners of an entity matrix 
@@ -254,48 +256,35 @@ class Generator():
     
     def create_snakes(self) -> None:
         # ensure method is called only once
-        if not self.snakes_created:
-            self.smooth_placement()
+        self.smooth_placement()
             
-            for entity_matrix, entity_type in self.entity_matrices:
-                if entity_type == 'snake':
-                    # get the start and end coordinates of the entity matrix
-                    top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
-                    # access the Cell class objects directly using the coordinates
-                    start_cell = self.cells_list[top_coordinate]
-                    end_cell = self.cells_list[bottom_coordinate]
-                    # create and initialize the Snake instance with Cell objects
-                    snake = Snake(start_cell, end_cell)
-                    # Place and draw the snake
-                    snake.put_on_board()
-                    snake.draw()
+        for entity_matrix in self.entity_matrices:
+            # if entity_type == 'snake':
+            # get the start and end coordinates of the entity matrix
+            top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
+            # create and initialize the Snake instance with Cell objects
+            snake = Snake(start_cell=self.cells_list[top_coordinate], end_cell=self.cells_list[bottom_coordinate])
+            # Place and draw the snake
+            snake.put_on_board()
+            snake.draw()
                     
-                    # snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
-            
-            # block the method once it is called  
-            self.snakes_created = True
+            # snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
 
     
     def create_ladders(self) -> None:
         # ensure method is called only once
-        if not self.ladders_created:
-            self.smooth_placement()
+        self.smooth_placement()
             
-            for entity_matrix, entity_type in self.entity_matrices:
-                if entity_type == 'ladder':
-                    # get the start and end coordinates of the entity matrix
-                    top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
-                    # access the Cell class objects directly using the coordinates
-                    start_cell = self.cells_list[bottom_coordinate]
-                    end_cell = self.cells_list[top_coordinate]
-                    # create and initialize the Snake instance with Cell objects
-                    ladder = Ladder(start_cell, end_cell)
-                    # Place and draw the snake
-                    ladder.put_on_board()
-                    ladder.draw()
+        for entity_matrix in self.entity_matrices:
+            # if entity_type == 'ladder':
+            # get the start and end coordinates of the entity matrix
+            top_coordinate, bottom_coordinate = self.get_entity_coordinates(entity_matrix)
+            # create and initialize the Snake instance with Cell objects
+            ladder = Ladder(start_cell=self.cells_list[bottom_coordinate], end_cell=self.cells_list[top_coordinate])
+            # Place and draw the snake
+            ladder.put_on_board()
+            ladder.draw()
             
-            # block the method once it is called  
-            self.ladders_created = True
   
 class Player():
     def __init__(self, position=[0, 0], current_cell=None):
@@ -409,6 +398,6 @@ while running:
 
     # Update the display and set the frame rate
     pg.display.flip()
-    clock.tick(60)
+    clock.tick(1)
 # Quit the pygame module at the end
 pg.quit()
