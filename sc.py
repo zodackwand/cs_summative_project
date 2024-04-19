@@ -29,78 +29,6 @@ class Color(Enum):
 
 PLAYER_START_POSITION = [255, 425]
 
-
-# Function to generate the coordinates of the cells on the board
-def generate_coordinates(rows, columns, cell_size, start_x=255, start_y=425):
-    cells_coordinates = []
-    gap = 5
-    for row in range(rows):
-        for col in range(columns):
-            x = start_x + (cell_size + GAP) * col
-            y = start_y - (cell_size + GAP) * row
-            cells_coordinates.append([x, y])
-    return cells_coordinates
-
-
-# Function to change the player position to the chosen cell position
-def change_position_to_cell(player, cell):
-    player.rect.topleft = cell.rect.topleft
-    player.position = cell.position
-    player.current_cell = cell
-    return player.rect.topleft
-
-
-# Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
-def draw_shortest_distance(value=0):
-    font = pg.font.Font(None, 15)  # Create a font object
-    text_surface = font.render(f"Minimum possible number of steps: {value}", True,
-                               Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(
-        topright=(SCREEN_WIDTH - 10, 20))  # Position the text at the top right corner of the screen
-    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-
-
-# Function to draw the score on the screen. value is the score.
-def draw_score(player):
-    value = player.update_score()
-    font = pg.font.Font(None, 15)  # Create a font object
-    text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(
-        topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
-    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-
-
-# Function to draw the past games scores on the screen. past_games_scores is a list of times.
-def draw_past_games_scores(past_games_scores):
-    font = pg.font.Font(None, 15)  # Create a font object
-    y_position = 40
-    # Sort the past games scores in ascending order
-    past_games_scores = quicksort(past_games_scores)
-    for i, score in enumerate(past_games_scores):
-        text_surface = font.render(f"Game {i + 1} score: {score}", True,
-                                   Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(
-            topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
-        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-        y_position += 10
-
-
-def quicksort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left = [x for x in arr if x < pivot]
-    middle = [x for x in arr if x == pivot]
-    right = [x for x in arr if x > pivot]
-    return quicksort(left) + middle + quicksort(right)
-
-
-# Create a font object to render the text on the screen
-font = pg.font.Font(None, 36)
-font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
-clock = pg.time.Clock()
-
-
 # Main game board class
 class Board():
     """Represents the game board."""
@@ -353,6 +281,65 @@ class Timer:
     def reset(self):
         self.start_time = time.time()
 
+# Function to generate the coordinates of the cells on the board
+def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, start_y:int=425) -> list[list[int]]:
+    cells_coordinates = []
+    gap = 5
+    for row in range(rows):
+        for col in range(columns):
+            x = start_x + (cell_size + GAP) * col
+            y = start_y - (cell_size + GAP) * row
+            cells_coordinates.append([x, y])
+    return cells_coordinates
+
+# Function to change the player position to the chosen cell position
+def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
+    player.rect.topleft = cell.rect.topleft
+    player.position = cell.position
+    player.current_cell = cell
+    return player.rect.topleft
+
+# Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
+def draw_shortest_distance(value:int=0) -> None:
+    font = pg.font.Font(None, 15)  # Create a font object
+    text_surface = font.render(f"Minimum possible number of steps: {value}", True, Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 20))  # Position the text at the top right corner of the screen
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
+# Function to draw the score on the screen. value is the score.
+def draw_score(value:int=0) -> None:
+    font = pg.font.Font(None, 15)  # Create a font object
+    text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
+# Function to draw the past games time on the screen. past_games_time is a list of times.
+def draw_past_games_scores(past_games_scores:list[int]) -> None:
+    font = pg.font.Font(None, 15)  # Create a font object
+    y_position = 40
+    # Sort the past games time in ascending order
+    past_games_scores = quicksort(past_games_scores)
+    for i, score in enumerate(past_games_scores):
+        text_surface = font.render(f"Game {i+1} score: {score}", True, Color.WHITE.value)  # Create a surface with the text
+        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
+        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+        y_position += 10
+
+def quicksort(arr: list[int]) -> list[int]:
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x > pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x < pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+
+# Create a font object to render the text on the screen
+font = pg.font.Font(None, 36)
+font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
+clock = pg.time.Clock()
+
 
 def main():
     """Main game loop."""
@@ -443,7 +430,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
     # Draw the shortest distance on the screen
     draw_shortest_distance()
     # Draw the score on the screen
-    draw_score(player)
+    draw_score(player.score)
     # Draw the test snakes and ladders
 
     for snake in board.snakes:
