@@ -394,11 +394,6 @@ def main():
         snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
         if snake.put_on_board():
             board.snakes.append(snake)
-
-    # Print the contents of cells after placing snakes and ladders
-    print("Before ladders placement")
-    print({key: cell.contents for key, cell in board.cells_list.items()})
-    print(snakes_coordinates)
         
     # Create ladders       
     for cells in ladders_coordinates:
@@ -407,11 +402,6 @@ def main():
         ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
         if ladder.put_on_board():
             board.ladders.append(ladder)
-            
-    # Print the contents of cells after placing snakes and ladders
-    print("After ladders placement")
-    print({key: cell.contents for key, cell in board.cells_list.items()})
-    print(ladders_coordinates)
 
     running = True
     while running:
