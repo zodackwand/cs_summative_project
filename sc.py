@@ -147,6 +147,7 @@ class Entity(ABC):
 
     def __init__(self, start_cell=None, end_cell=None, color=None, snake_ladder=0):
         # start_cell and end_cell are objects of the Cell class
+        # snake_ladder is determine whether the entity is a Snake (-1) or a Ladder (+1)
         self.start_cell = start_cell
         self.end_cell = end_cell
         self.color = color
@@ -161,6 +162,7 @@ class Entity(ABC):
     def draw(self):
         """Draws the entity on the screen."""
         pass
+
 
 class Snake(Entity):
     """Represents a snake on the board."""
@@ -252,8 +254,9 @@ class Generator():
 class Player():
     """
         This class is for objects player in the game
-        tot_score : the total score of the player
-        snakes_encountered: how many snakes the player encounters during the game (if 0 points will double in the end)
+        score : the total score of the player
+        entity encountered: boolean value whether the player reacted to the entity or not in each loop it will be False
+        num_snakes: how many snakes the player encounters during the game (if 0 points will double in the end)
     """
 
     def __init__(self, position=[0, 0], current_cell=None, tot_score=100):
@@ -273,6 +276,7 @@ class Player():
     def set_color(self, array):
         self.surface.fill(array)
 
+    # Score will update each time the player encounters an entity LADDER (+5) or SNAKE (-5)
     def react_to_entity(self, entity):
         if not self.entity_encountered:
             if entity.snake_ladder < 0:
@@ -290,6 +294,7 @@ class Player():
         self.score += points
         return self.score
 
+    # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self):
         self.num_snakes += 1
         return True
@@ -378,7 +383,6 @@ def main():
             draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
             update_game_state(player)
 
-
         # Update the display and set the frame rate
         pg.display.flip()
         clock.tick(60)
@@ -404,9 +408,12 @@ def handle_events(player, board, timer, past_games_scores):
                     player.position = change_position_to_cell(player, board.cells_list[next_cell_number])
                 else:
                     player.position = change_position_to_cell(player, board.cells_list[100])
+                    # Special bonus (if player doesn't encounter any snakes score is doubled)
+                    if player.num_snakes == 0:
+                        player.update_score(player.score)
             # Reset button
             if event.key == pg.K_r:
-                # Record the time taken if only the player reaches the last cell
+                # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
                     past_games_scores.append(player.update_score())
                 player.position = change_position_to_cell(player, board.cells_list[1])
@@ -418,7 +425,6 @@ def handle_events(player, board, timer, past_games_scores):
 def update_game_state(player):
     if player.current_cell.contents is not None:
         player.react_to_entity(player.current_cell.contents)
-
 
 
 def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
