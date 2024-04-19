@@ -100,11 +100,14 @@ class Snake(Entity):
         """Draws the snake on the screen."""
         pg.draw.line(screen, self.color, self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
-    def put_on_board(self) -> None:
+    def put_on_board(self) -> bool:
         """Places the snake on the board."""
-        if self.start_cell.contents == None and self.end_cell.contents == None:
+        if self.start_cell.contents == None and self.end_cell.contents == None and self.start_cell != self.end_cell:
             self.start_cell.contents = self
             self.end_cell.contents = self
+            return True
+
+        return False
 
 
 class Ladder(Entity):
@@ -117,33 +120,36 @@ class Ladder(Entity):
         """Draws the ladder on the screen."""
         pg.draw.line(screen, self.color, self.start_cell.rect.center, self.end_cell.rect.center, 5)
 
-    def put_on_board(self) -> None:
+    def put_on_board(self) -> bool:
         """Places the ladder on the board."""
-        if self.start_cell.contents == None and self.end_cell.contents == None:
+        if self.start_cell.contents == None and self.end_cell.contents == None and self.start_cell != self.end_cell:
             self.start_cell.contents = self
             self.end_cell.contents = self
+            return True
+
+        return False
 
 
-class Generator():
-    def __init__(self, rows: int, columns: int, cells_list={}):
+class Generator:
+    
+    def __init__(self, rows: int, columns: int, board):
         self.rows = rows
         self.columns = columns
-        self.cells_list = cells_list
+        self.cells_list = board.cells_list
         self.entity_matrices = []
 
     def board_cells_to_matrix(self) -> list:
         board_matrix = np.zeros((self.rows, self.columns), dtype=int)
-        for key, value in input_dict.items():
+        for key, value in self.cells_list.items():
             row = (key - 1) // self.columns
             column = (key - 1) % self.columns
             board_matrix[row, column] = key
         return np.flipud(board_matrix)
 
     def create_null_matrices(self) -> list:
-        # generate null matrices for entities with sizes 3x1 to 4x4
         null_matrices = []
-        for i in range(3, 5):
-            for j in range(1, 5):
+        for i in range(3, 6):
+            for j in range(1, 3):
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
 
@@ -152,29 +158,57 @@ class Generator():
         row_start = rd.randint(0, self.rows - entity_rows)
         column_start = rd.randint(0, self.columns - entity_columns)
 
-        # check if the position is availible
         if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
-            # add the extracted matrix to the list
-            self.entity_matrices.append(
-                board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns].copy())
-            # place the null matrix
-            board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
+            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows,
+                                                    column_start: column_start + entity_columns].copy())
+            board_matrix[row_start: row_start + entity_rows, 
+                         column_start: column_start + entity_columns] = null_matrix
             return True
 
         return False
 
     def smooth_placement(self) -> None:
-        # Entities cover approx. 50% of the board
-        pass
+        board_matrix = self.board_cells_to_matrix()
+        total_elements = board_matrix.size
+        target_elements = int(total_elements * 0.7)
+        null_matrices = self.create_null_matrices()
+        rd.shuffle(null_matrices)
 
-    def get_entity_coordinates(self) -> list:
-        pass
+        elements_covered = 0
+        for null_matrix in null_matrices:
+            if elements_covered + null_matrix.size <= target_elements:
+                if self.put_entity_matrix(board_matrix, null_matrix):
+                    elements_covered += null_matrix.size
+            else:
+                break
 
-    def create_snakes(self):
-        pass
+    def get_entities_coordinates(self) -> list:
+        entities_coordinates = []
+        self.smooth_placement()
 
-    def create_ladders(self):
-        pass
+        for entity_matrix in self.entity_matrices:
+            rows, columns = entity_matrix.shape
+
+            if columns == 1:
+                # Get the top and bottom corner coordinates for entities with single column
+                top_corner = entity_matrix[0, 0]
+                bottom_corner = entity_matrix[rows - 1, 0]
+            else:
+                # For entities with multiple columns, select a random column for the top corner
+                top_row = 0
+                bottom_row = rows - 1
+                selected_column = rd.choice([0, columns - 1])
+                top_corner = entity_matrix[top_row, selected_column]
+
+                # Depending on the selected column, get the corresponding bottom corner coordinate
+                if selected_column == 0:
+                    bottom_corner = entity_matrix[bottom_row, selected_column - 1]
+                else:
+                    bottom_corner = entity_matrix[bottom_row, 0]
+
+            entities_coordinates.append([bottom_corner, top_corner])
+
+        return entities_coordinates 
 
 
 class Player():
@@ -349,13 +383,25 @@ def main():
     timer = Timer()
     past_games_scores = []
 
-    snake1 = Snake(start_cell=board.cells_list[75], end_cell=board.cells_list[33])
-    snake1.put_on_board()
-    board.snakes.append(snake1)
-
-    ladder1 = Ladder(start_cell=board.cells_list[19], end_cell=board.cells_list[35])
-    ladder1.put_on_board()
-    board.ladders.append(ladder1)
+    generator = Generator(ROWS, COLUMNS, board=board)
+    snakes_coordinates = generator.get_entities_coordinates()
+    ladders_coordinates = generator.get_entities_coordinates()
+    
+    # Create snakes
+    for cells in snakes_coordinates:
+        bottom_coordinate, top_coordinate = cells
+            
+        snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+        if snake.put_on_board():
+            board.snakes.append(snake)
+        
+    # Create ladders       
+    for cells in ladders_coordinates:
+        bottom_coordinate, top_coordinate = cells
+            
+        ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
+        if ladder.put_on_board():
+            board.ladders.append(ladder)
 
     running = True
     while running:
