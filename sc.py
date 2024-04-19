@@ -73,13 +73,11 @@ def roll_dice():
 class Entity(ABC):
     """Represents an entity on the board."""
 
-    def __init__(self, start_cell=None, end_cell=None, color=None, snake_ladder=0):
+    def __init__(self, start_cell=None, end_cell=None, color=None):
         # start_cell and end_cell are objects of the Cell class
-        # snake_ladder is determine whether the entity is a Snake (-1) or a Ladder (+1)
         self.start_cell = start_cell
         self.end_cell = end_cell
         self.color = color
-        self.snake_ladder = snake_ladder
 
     @abstractmethod
     def put_on_board(self):
@@ -96,7 +94,7 @@ class Snake(Entity):
     """Represents a snake on the board."""
 
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell, Color.RED.value, -1)
+        super().__init__(start_cell, end_cell, Color.RED.value)
 
     def draw(self):
         """Draws the snake on the screen."""
@@ -113,7 +111,7 @@ class Ladder(Entity):
     """Represents a ladder on the board."""
 
     def __init__(self, start_cell=None, end_cell=None):
-        super().__init__(start_cell, end_cell, Color.GREEN.value, 1)
+        super().__init__(start_cell, end_cell, Color.GREEN.value)
 
     def draw(self):
         """Draws the ladder on the screen."""
@@ -194,7 +192,6 @@ class Player():
         self.position = position
         self.current_cell = current_cell
         self.score = tot_score
-        self.entity_encountered = True
         self.num_snakes = 0
 
     def set_position(self, array):
@@ -206,16 +203,13 @@ class Player():
 
     # Score will update each time the player encounters an entity LADDER (+5) or SNAKE (-5)
     def react_to_entity(self, entity):
-        if not self.entity_encountered:
-            if entity.snake_ladder < 0:
-                self.position = change_position_to_cell(self, entity.end_cell)
-                self.snake_encountered()
-                self.update_score(-5)
-                self.entity_encountered = True
-            elif entity.snake_ladder > 0:
-                self.position = change_position_to_cell(self, entity.end_cell)
-                self.update_score(+5)
-                self.entity_encountered = True
+        if isinstance(entity, Snake):
+            self.position = change_position_to_cell(self, entity.end_cell)
+            self.snake_encountered()
+            self.update_score(-5)
+        elif isinstance(entity, Ladder):
+            self.position = change_position_to_cell(self, entity.end_cell)
+            self.update_score(+5)
 
     # A method to update the player's score during the game to for display in the end
     def update_score(self, points: int = 0):
@@ -385,7 +379,6 @@ def handle_events(player, board, timer, past_games_scores):
         if event.type == pg.KEYDOWN:
             # If the key is the space bar
             if event.key == pg.K_SPACE:
-                player.entity_encountered = False
                 # Change the player position based on the dice roll
                 moves = roll_dice()
                 current_cell_number = player.current_cell.number
@@ -410,7 +403,7 @@ def handle_events(player, board, timer, past_games_scores):
 
 
 def update_game_state(player):
-    if player.current_cell.contents is not None:
+    if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         player.react_to_entity(player.current_cell.contents)
 
 
