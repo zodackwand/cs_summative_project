@@ -7,6 +7,7 @@ from enum import Enum
 import os
 
 # Initialize the pygame module with screen size, caption and color
+# Created by 5590073
 pg.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -14,23 +15,23 @@ screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption("Snakes and Ladders")
 
 # Define the number of rows, columns, cell size and gap between cells
+# Created by 5590073
 ROWS = 10
 COLUMNS = 10
 CELL_SIZE = 25
 GAP = 5
 
-
+# Created by 5590073
 class Color(Enum):
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
-
-
 PLAYER_START_POSITION = [255, 425]
 
 # Main game board class
+# Created by 5590073
 class Board():
     """Represents the game board."""
 
@@ -66,11 +67,11 @@ class Board():
     def set_color(self, array):
         self.surface.fill(array)
 
-
+# Created by 5590073
 def roll_dice():
     return rd.randint(1, 6)
 
-
+# Created by 5590073 and ...
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -90,7 +91,7 @@ class Entity(ABC):
         """Draws the entity on the screen."""
         pass
 
-
+# Created by 5590073 and ...
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -110,7 +111,7 @@ class Snake(Entity):
 
         return False
 
-
+# Created by 5590073 and ...
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -211,7 +212,7 @@ class Generator:
 
         return entities_coordinates 
 
-
+# Created by 5590073, edited by ...
 class Player():
     """
         This class is for objects player in the game
@@ -258,6 +259,7 @@ class Player():
 
 
 # The board consists of cells, which are the squares
+# Created by 5590073
 class Cell():
     def __init__(self, size=[CELL_SIZE, CELL_SIZE], position=[0, 0], contents=None):
         self.surface = pg.Surface(size)
@@ -274,7 +276,7 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-
+# Created by 5590073
 class ProgressBar:
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
@@ -292,7 +294,7 @@ class ProgressBar:
         # Draw the progress bar
         pg.draw.rect(screen, self.color, (*self.position, self.size[0] * self.progress, self.size[1]))
 
-
+# Created by 5590073
 class Timer:
     def __init__(self):
         self.start_time = time.time()
@@ -311,6 +313,7 @@ class Timer:
         self.start_time = time.time()
 
 # Function to generate the coordinates of the cells on the board
+# Created by 5590073
 def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, start_y:int=425) -> list[list[int]]:
     cells_coordinates = []
     gap = 5
@@ -322,6 +325,7 @@ def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, 
     return cells_coordinates
 
 # Function to change the player position to the chosen cell position
+# Created by 5590073
 def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
@@ -329,6 +333,7 @@ def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     return player.rect.topleft
 
 # Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
+# Created by 5590073
 def draw_shortest_distance(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Minimum possible number of steps: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -336,6 +341,7 @@ def draw_shortest_distance(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the score on the screen. value is the score.
+# Created by 5590073
 def draw_score(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -343,6 +349,7 @@ def draw_score(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the past games time on the screen. past_games_time is a list of times.
+# Created by 5590073
 def draw_past_games_scores(past_games_scores:list[int]) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
@@ -354,6 +361,7 @@ def draw_past_games_scores(past_games_scores:list[int]) -> None:
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
 
+# Created by 5590073
 def quicksort(arr: list[int]) -> list[int]:
     if len(arr) <= 1:
         return arr
@@ -365,11 +373,12 @@ def quicksort(arr: list[int]) -> list[int]:
 
 
 # Create a font object to render the text on the screen
+# Created by 5590073
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
 clock = pg.time.Clock()
 
-
+# Created by 5590073, edited by ...
 def main():
     """Main game loop."""
     board = Board(ROWS, COLUMNS)
@@ -404,6 +413,7 @@ def main():
         if ladder.put_on_board():
             board.ladders.append(ladder)
 
+    # Created by 5590073
     running = True
     while running:
         running = handle_events(player, board, timer, past_games_scores)
@@ -418,7 +428,7 @@ def main():
     pg.quit()
     os._exit(0)
 
-
+# Created by 5590073, edited by ...
 def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
@@ -449,12 +459,12 @@ def handle_events(player, board, timer, past_games_scores):
                 timer.reset()
     return True
 
-
+# Created by 5590073
 def update_game_state(player):
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         player.react_to_entity(player.current_cell.contents)
 
-
+# Created by 5590073
 def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
