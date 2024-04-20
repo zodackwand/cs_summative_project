@@ -313,6 +313,7 @@ class Timer:
         self.start_time = time.time()
 
 # Function to generate the coordinates of the cells on the board
+# Created by 5590073
 def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, start_y:int=425) -> list[list[int]]:
     cells_coordinates = []
     gap = 5
@@ -324,6 +325,7 @@ def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, 
     return cells_coordinates
 
 # Function to change the player position to the chosen cell position
+# Created by 5590073
 def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
@@ -331,6 +333,7 @@ def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     return player.rect.topleft
 
 # Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
+# Created by 5590073
 def draw_shortest_distance(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Minimum possible number of steps: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -338,6 +341,7 @@ def draw_shortest_distance(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the score on the screen. value is the score.
+# Created by 5590073
 def draw_score(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -345,6 +349,7 @@ def draw_score(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the past games time on the screen. past_games_time is a list of times.
+# Created by 5590073
 def draw_past_games_scores(past_games_scores:list[int]) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
@@ -356,6 +361,7 @@ def draw_past_games_scores(past_games_scores:list[int]) -> None:
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
 
+# Created by 5590073
 def quicksort(arr: list[int]) -> list[int]:
     if len(arr) <= 1:
         return arr
@@ -367,11 +373,12 @@ def quicksort(arr: list[int]) -> list[int]:
 
 
 # Create a font object to render the text on the screen
+# Created by 5590073
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
 clock = pg.time.Clock()
 
-
+# Created by 5590073, edited by ...
 def main():
     """Main game loop."""
     board = Board(ROWS, COLUMNS)
@@ -406,6 +413,7 @@ def main():
         if ladder.put_on_board():
             board.ladders.append(ladder)
 
+    # Created by 5590073
     running = True
     while running:
         running = handle_events(player, board, timer, past_games_scores)
@@ -420,7 +428,7 @@ def main():
     pg.quit()
     os._exit(0)
 
-
+# Created by 5590073, edited by ...
 def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
@@ -451,12 +459,12 @@ def handle_events(player, board, timer, past_games_scores):
                 timer.reset()
     return True
 
-
+# Created by 5590073
 def update_game_state(player):
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         player.react_to_entity(player.current_cell.contents)
 
-
+# Created by 5590073
 def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
