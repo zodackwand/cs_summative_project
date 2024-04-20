@@ -221,7 +221,7 @@ class Player():
         num_snakes: how many snakes the player encounters during the game (if 0 points will double in the end)
     """
 
-    def __init__(self, position=[0, 0], current_cell=None, tot_score=100):
+    def __init__(self, position=[0, 0], current_cell=None, tot_score=100, moves=0):
         self.surface = pg.Surface([CELL_SIZE, CELL_SIZE])
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
@@ -229,6 +229,7 @@ class Player():
         self.current_cell = current_cell
         self.score = tot_score
         self.num_snakes = 0
+        self.moves = moves
 
     def set_position(self, array):
         self.position = array
@@ -347,8 +348,20 @@ def draw_score(value:int=0) -> None:
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 30))  # Position the text at the top right corner of the screen
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+def draw_dice_value(value:int=0):
+    font = pg.font.Font(None, 20)  # Create a font object
+    text_surface = font.render(f"Press SPACE to roll the dice : {value}", True, Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH-35, 250))  # Position the text at the mid right
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
-# Function to draw the past games time on the screen. past_games_time is a list of times.
+def draw_restart():
+    font = pg.font.Font(None, 20)  # Create a font object
+    text_surface = font.render(f"Press R to restart", True,
+                               Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH-75, 270))  # Position the text at the mid right
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
+# Function to draw the past games score on the screen. past_games_score is a list of times.
 # Created by 5590073
 def draw_past_games_scores(past_games_scores:list[int]) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
@@ -418,7 +431,7 @@ def main():
     while running:
         running = handle_events(player, board, timer, past_games_scores)
         if running:
-            draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
+            draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar, player.moves)
             update_game_state(player)
 
         # Update the display and set the frame rate
@@ -438,9 +451,9 @@ def handle_events(player, board, timer, past_games_scores):
             # If the key is the space bar
             if event.key == pg.K_SPACE:
                 # Change the player position based on the dice roll
-                moves = roll_dice()
+                player.moves = roll_dice()
                 current_cell_number = player.current_cell.number
-                next_cell_number = current_cell_number + moves
+                next_cell_number = current_cell_number + player.moves
                 # Ensure that the player does not move beyond the last cell
                 if next_cell_number <= 100:
                     player.position = change_position_to_cell(player, board.cells_list[next_cell_number])
@@ -465,7 +478,7 @@ def update_game_state(player):
         player.react_to_entity(player.current_cell.contents)
 
 # Created by 5590073
-def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
+def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar, dice_value):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
     screen.fill((0, 0, 0))
@@ -496,6 +509,10 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
     # Draw the updated progress bar on the screen
     progress_bar.draw(screen)
     draw_past_games_scores(past_games_scores)
+    # Draw the value after rolling the dice and shows how the dice is rolled
+    draw_dice_value(dice_value)
+    # Draws text to player to show how to restart the game
+    draw_restart()
 
 
 if __name__ == "__main__":
