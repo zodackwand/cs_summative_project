@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import time
 from enum import Enum
+import os
 
 # Initialize the pygame module with screen size, caption and color
 pg.init()
@@ -415,6 +416,7 @@ def main():
         clock.tick(60)
     # Quit the pygame module at the end
     pg.quit()
+    os._exit(0)
 
 
 def handle_events(player, board, timer, past_games_scores):
