@@ -435,22 +435,6 @@ def main():
     generator.create_snakes(board=board)
     generator.create_ladders(board=board)
     
-    # # Create snakes
-    # for cells in snakes_coordinates:
-    #     bottom_coordinate, top_coordinate = cells
-            
-    #     snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
-    #     if snake.put_on_board():
-    #         board.snakes.append(snake)
-        
-    # # Create ladders       
-    # for cells in ladders_coordinates:
-    #     bottom_coordinate, top_coordinate = cells
-            
-    #     ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
-    #     if ladder.put_on_board():
-    #         board.ladders.append(ladder)
-
     running = True
     while running:
         running = handle_events(player, board, timer, past_games_scores)
