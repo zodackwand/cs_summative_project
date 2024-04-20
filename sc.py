@@ -4,10 +4,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import time
 from enum import Enum
-import os
+from collections import deque
 
 # Initialize the pygame module with screen size, caption and color
-# Created by 5590073
 pg.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -15,23 +14,23 @@ screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption("Snakes and Ladders")
 
 # Define the number of rows, columns, cell size and gap between cells
-# Created by 5590073
 ROWS = 10
 COLUMNS = 10
 CELL_SIZE = 25
 GAP = 5
 
-# Created by 5590073
+
 class Color(Enum):
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
+
+
 PLAYER_START_POSITION = [255, 425]
 
 # Main game board class
-# Created by 5590073
 class Board():
     """Represents the game board."""
 
@@ -67,11 +66,11 @@ class Board():
     def set_color(self, array):
         self.surface.fill(array)
 
-# Created by 5590073
+
 def roll_dice():
     return rd.randint(1, 6)
 
-# Created by 5590073 and ...
+
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -91,7 +90,7 @@ class Entity(ABC):
         """Draws the entity on the screen."""
         pass
 
-# Created by 5590073 and ...
+
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -111,7 +110,7 @@ class Snake(Entity):
 
         return False
 
-# Created by 5590073 and ...
+
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -134,59 +133,60 @@ class Ladder(Entity):
 
 class Generator:
     
-    def __init__(self, rows: int, columns: int, board):
+    def __init__(self, rows: int, columns: int, board: Board):
         self.rows = rows
         self.columns = columns
+        self.board = board
         self.cells_list = board.cells_list
         self.entity_matrices = []
 
-    def board_cells_to_matrix(self) -> list:
+    def _board_cells_to_matrix(self) -> np.ndarray:
         board_matrix = np.zeros((self.rows, self.columns), dtype=int)
-        for key, value in self.cells_list.items():
+        for key, value in self.board.cells_list.items():
             row = (key - 1) // self.columns
             column = (key - 1) % self.columns
             board_matrix[row, column] = key
         return np.flipud(board_matrix)
 
-    def create_null_matrices(self) -> list:
+    def _create_null_matrices(self) -> list:
         null_matrices = []
         for i in range(3, 6):
-            for j in range(1, 3):
+            for j in range(2, 6):
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
 
-    def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
+    def _put_entity_matrix(self, board_matrix, null_matrix) -> bool:
         entity_rows, entity_columns = null_matrix.shape
         row_start = rd.randint(0, self.rows - entity_rows)
         column_start = rd.randint(0, self.columns - entity_columns)
+        restricted_cells = [0, 1, self.rows * self.columns]
 
-        if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
-            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows,
-                                                    column_start: column_start + entity_columns].copy())
-            board_matrix[row_start: row_start + entity_rows, 
-                         column_start: column_start + entity_columns] = null_matrix
+        selected_cells = board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns]
+        if np.all(selected_cells != 0) and not np.any(np.isin(selected_cells, restricted_cells)):
+            self.entity_matrices.append(selected_cells.copy())
+            board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
             return True
 
         return False
 
-    def smooth_placement(self) -> None:
-        board_matrix = self.board_cells_to_matrix()
+    def _smooth_placement(self) -> None:
+        board_matrix = self._board_cells_to_matrix()
         total_elements = board_matrix.size
         target_elements = int(total_elements * 0.7)
-        null_matrices = self.create_null_matrices()
+        null_matrices = self._create_null_matrices()
         rd.shuffle(null_matrices)
 
         elements_covered = 0
         for null_matrix in null_matrices:
             if elements_covered + null_matrix.size <= target_elements:
-                if self.put_entity_matrix(board_matrix, null_matrix):
+                if self._put_entity_matrix(board_matrix, null_matrix):
                     elements_covered += null_matrix.size
             else:
                 break
 
-    def get_entities_coordinates(self) -> list:
+    def _get_entities_coordinates(self) -> list:
         entities_coordinates = []
-        self.smooth_placement()
+        self._smooth_placement()
 
         for entity_matrix in self.entity_matrices:
             rows, columns = entity_matrix.shape
@@ -210,9 +210,28 @@ class Generator:
 
             entities_coordinates.append([bottom_corner, top_corner])
 
-        return entities_coordinates 
+        return entities_coordinates
+    
+    def create_snakes(self, board: Board) -> None:
+        snakes_coordinates = self._get_entities_coordinates
+        
+        for cells in self._get_entities_coordinates():
+            bottom_coordinate, top_coordinate = cells
+            
+            snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+            if snake.put_on_board():
+                board.snakes.append(snake)
 
-# Created by 5590073, edited by ...
+    def create_ladders(self, board: Board) -> None:
+        
+        for cells in self._get_entities_coordinates():
+            bottom_coordinate, top_coordinate = cells
+            
+            ladder = Ladder(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+            if ladder.put_on_board():
+                board.ladders.append(ladder)
+
+
 class Player():
     """
         This class is for objects player in the game
@@ -259,7 +278,6 @@ class Player():
 
 
 # The board consists of cells, which are the squares
-# Created by 5590073
 class Cell():
     def __init__(self, size=[CELL_SIZE, CELL_SIZE], position=[0, 0], contents=None):
         self.surface = pg.Surface(size)
@@ -276,7 +294,7 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-# Created by 5590073
+
 class ProgressBar:
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
@@ -294,7 +312,7 @@ class ProgressBar:
         # Draw the progress bar
         pg.draw.rect(screen, self.color, (*self.position, self.size[0] * self.progress, self.size[1]))
 
-# Created by 5590073
+
 class Timer:
     def __init__(self):
         self.start_time = time.time()
@@ -313,7 +331,6 @@ class Timer:
         self.start_time = time.time()
 
 # Function to generate the coordinates of the cells on the board
-# Created by 5590073
 def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, start_y:int=425) -> list[list[int]]:
     cells_coordinates = []
     gap = 5
@@ -325,7 +342,6 @@ def generate_coordinates(rows:int, columns:int, cell_size:int, start_x:int=255, 
     return cells_coordinates
 
 # Function to change the player position to the chosen cell position
-# Created by 5590073
 def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
@@ -333,7 +349,6 @@ def change_position_to_cell(player:Player, cell:Cell) -> tuple[int, int]:
     return player.rect.topleft
 
 # Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
-# Created by 5590073
 def draw_shortest_distance(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Minimum possible number of steps: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -341,7 +356,6 @@ def draw_shortest_distance(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the score on the screen. value is the score.
-# Created by 5590073
 def draw_score(value:int=0) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
@@ -349,7 +363,6 @@ def draw_score(value:int=0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 # Function to draw the past games time on the screen. past_games_time is a list of times.
-# Created by 5590073
 def draw_past_games_scores(past_games_scores:list[int]) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
@@ -361,7 +374,6 @@ def draw_past_games_scores(past_games_scores:list[int]) -> None:
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
 
-# Created by 5590073
 def quicksort(arr: list[int]) -> list[int]:
     if len(arr) <= 1:
         return arr
@@ -371,14 +383,40 @@ def quicksort(arr: list[int]) -> list[int]:
     right = [x for x in arr if x < pivot]
     return quicksort(left) + middle + quicksort(right)
 
+def calculate_shortest_path(board):
+    start_cell = board.cells_list[1]
+    end_cell = board.cells_list[board.rows * board.columns]  # Last cell
+
+    visited = set()
+    queue = deque([(start_cell, 0)])
+
+    while queue:
+        current_cell, cells_passed = queue.popleft()
+
+        if current_cell == end_cell:
+            return cells_passed
+
+        if current_cell not in visited:
+            visited.add(current_cell)
+
+            for ladder in board.ladders:
+                if ladder.start_cell == current_cell:
+                    queue.append((ladder.end_cell, cells_passed))  # Keep the same number of cells passed
+
+            for i in range(1, 7):  # Dice roll possibilities
+                next_cell_number = current_cell.number + i
+                if next_cell_number <= board.rows * board.columns:
+                    next_cell = board.cells_list[next_cell_number]
+                    queue.append((next_cell, cells_passed + 1))  # Increment the number of cells passed
+
+    return -1  # If no path found
 
 # Create a font object to render the text on the screen
-# Created by 5590073
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
 clock = pg.time.Clock()
 
-# Created by 5590073, edited by ...
+
 def main():
     """Main game loop."""
     board = Board(ROWS, COLUMNS)
@@ -394,30 +432,32 @@ def main():
     past_games_scores = []
 
     generator = Generator(ROWS, COLUMNS, board=board)
-    snakes_coordinates = generator.get_entities_coordinates()
-    ladders_coordinates = generator.get_entities_coordinates()
+    generator.create_snakes(board=board)
+    generator.create_ladders(board=board)
     
-    # Create snakes
-    for cells in snakes_coordinates:
-        bottom_coordinate, top_coordinate = cells
+    # # Create snakes
+    # for cells in snakes_coordinates:
+    #     bottom_coordinate, top_coordinate = cells
             
-        snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
-        if snake.put_on_board():
-            board.snakes.append(snake)
+    #     snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+    #     if snake.put_on_board():
+    #         board.snakes.append(snake)
         
-    # Create ladders       
-    for cells in ladders_coordinates:
-        bottom_coordinate, top_coordinate = cells
+    # # Create ladders       
+    # for cells in ladders_coordinates:
+    #     bottom_coordinate, top_coordinate = cells
             
-        ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
-        if ladder.put_on_board():
-            board.ladders.append(ladder)
+    #     ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
+    #     if ladder.put_on_board():
+    #         board.ladders.append(ladder)
 
-    # Created by 5590073
     running = True
     while running:
         running = handle_events(player, board, timer, past_games_scores)
         if running:
+            # Recalculate shortest path whenever the player's position changes
+            shortest_path = calculate_shortest_path(board)
+            print(shortest_path)
             draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
             update_game_state(player)
 
@@ -426,9 +466,8 @@ def main():
         clock.tick(60)
     # Quit the pygame module at the end
     pg.quit()
-    os._exit(0)
 
-# Created by 5590073, edited by ...
+
 def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
@@ -459,12 +498,12 @@ def handle_events(player, board, timer, past_games_scores):
                 timer.reset()
     return True
 
-# Created by 5590073
+
 def update_game_state(player):
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         player.react_to_entity(player.current_cell.contents)
 
-# Created by 5590073
+
 def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar):
     """Draws the game state."""
     # Each frame is filled with black color, so that the previous frame is not visible
