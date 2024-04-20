@@ -7,6 +7,7 @@ from enum import Enum
 import os
 
 # Initialize the pygame module with screen size, caption and color
+# Created by 5590073
 pg.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -14,23 +15,23 @@ screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption("Snakes and Ladders")
 
 # Define the number of rows, columns, cell size and gap between cells
+# Created by 5590073
 ROWS = 10
 COLUMNS = 10
 CELL_SIZE = 25
 GAP = 5
 
-
+# Created by 5590073
 class Color(Enum):
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
-
-
 PLAYER_START_POSITION = [255, 425]
 
 # Main game board class
+# Created by 5590073
 class Board():
     """Represents the game board."""
 
@@ -66,11 +67,11 @@ class Board():
     def set_color(self, array):
         self.surface.fill(array)
 
-
+# Created by 5590073
 def roll_dice():
     return rd.randint(1, 6)
 
-
+# Created by 5590073 and ...
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -90,7 +91,7 @@ class Entity(ABC):
         """Draws the entity on the screen."""
         pass
 
-
+# Created by 5590073 and ...
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -110,7 +111,7 @@ class Snake(Entity):
 
         return False
 
-
+# Created by 5590073 and ...
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -211,7 +212,7 @@ class Generator:
 
         return entities_coordinates 
 
-
+# Created by 5590073, edited by ...
 class Player():
     """
         This class is for objects player in the game
@@ -258,6 +259,7 @@ class Player():
 
 
 # The board consists of cells, which are the squares
+# Created by 5590073
 class Cell():
     def __init__(self, size=[CELL_SIZE, CELL_SIZE], position=[0, 0], contents=None):
         self.surface = pg.Surface(size)
@@ -274,7 +276,7 @@ class Cell():
         self.position = array
         self.rect.topleft = array
 
-
+# Created by 5590073
 class ProgressBar:
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
@@ -292,7 +294,7 @@ class ProgressBar:
         # Draw the progress bar
         pg.draw.rect(screen, self.color, (*self.position, self.size[0] * self.progress, self.size[1]))
 
-
+# Created by 5590073
 class Timer:
     def __init__(self):
         self.start_time = time.time()
