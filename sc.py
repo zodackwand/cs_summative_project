@@ -30,8 +30,8 @@ pg.display.set_caption("Snakes and Ladders")
 # Created by 5590073
 ROWS = 10
 COLUMNS = 10
-CELL_SIZE = 25
-GAP = 5
+CELL_SIZE_PIXELS = 25
+GAP_PIXELS = 5
 
 
 # Created by 5590073
@@ -51,7 +51,7 @@ PLAYER_START_POSITION = [255, 425]
 class Board():
     """Represents the game board."""
 
-    def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE, gap=GAP):
+    def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE_PIXELS, gap=GAP_PIXELS):
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
@@ -80,8 +80,8 @@ class Board():
             text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
             screen.blit(text_surface, text_rect)
 
-    def set_color(self, array):
-        self.surface.fill(array)
+    def set_color(self, color_array):
+        self.surface.fill(color_array)
 
 
 # Created by 5590073
@@ -246,7 +246,7 @@ class Player():
     """
     # Created by ... edited by 5555194
     def __init__(self, position=[0, 0], current_cell=None, tot_score=100, moves=0):
-        self.surface = pg.Surface([CELL_SIZE, CELL_SIZE])
+        self.surface = pg.Surface([CELL_SIZE_PIXELS, CELL_SIZE_PIXELS])
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
         self.position = position
@@ -255,12 +255,12 @@ class Player():
         self._num_snakes = 0
         self.moves = moves
 
-    def set_position(self, array):
-        self.position = array
-        self.rect.topleft = array
+    def set_position(self, position_array):
+        self.position = position_array
+        self.rect.topleft = position_array
 
-    def set_color(self, array):
-        self.surface.fill(array)
+    def set_color(self, color_array):
+        self.surface.fill(color_array)
 
     # Created by 5555194
     # Score will update each time the player encounters an entity
@@ -291,7 +291,7 @@ class Player():
 # The board consists of cells, which are the squares
 # Created by 5590073
 class Cell():
-    def __init__(self, size=[CELL_SIZE, CELL_SIZE], position=[0, 0], contents=None):
+    def __init__(self, size=[CELL_SIZE_PIXELS, CELL_SIZE_PIXELS], position=[0, 0], contents=None):
         self.surface = pg.Surface(size)
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
@@ -299,12 +299,12 @@ class Cell():
         self.contents = contents
         self.number = None
 
-    def set_color(self, array):
-        self.surface.fill(array)
+    def set_color(self, color_array):
+        self.surface.fill(color_array)
 
-    def set_position(self, array):
-        self.position = array
-        self.rect.topleft = array
+    def set_position(self, position_array):
+        self.position = position_array
+        self.rect.topleft = position_array
 
 
 # Created by 5590073
@@ -353,8 +353,8 @@ def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int =
     gap = 5
     for row in range(rows):
         for col in range(columns):
-            x = start_x + (cell_size + GAP) * col
-            y = start_y - (cell_size + GAP) * row
+            x = start_x + (cell_size + GAP_PIXELS) * col
+            y = start_y - (cell_size + GAP_PIXELS) * row
             cells_coordinates.append([x, y])
     return cells_coordinates
 
@@ -449,7 +449,7 @@ def main():
     try:
         board = Board(ROWS, COLUMNS)
         board.set_color(Color.WHITE.value)
-        board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE))
+        board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE_PIXELS))
 
         player = Player(position=PLAYER_START_POSITION)
         player.set_color(Color.PLAYER_COLOR.value)
@@ -484,7 +484,7 @@ def main():
         while running:
             running = handle_events(player, board, timer, past_games_scores)
             if running:
-                draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
+                draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar, player.moves)
                 update_game_state(player)
 
             # Update the display and set the frame rate
@@ -557,7 +557,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
         # Draw the shortest distance on the screen
         draw_shortest_distance()
         # Draw the score on the screen
-        draw_score(player.score)
+        draw_score(player._score)
         
         # Draw the test snakes and ladders
         for snake in board.snakes:
