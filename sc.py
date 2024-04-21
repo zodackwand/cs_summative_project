@@ -1,14 +1,26 @@
-import pygame as pg
-import random as rd
-from abc import ABC, abstractmethod
-import numpy as np
-import time
-from enum import Enum
-import os
+try:
+    import pygame as pg
+    import random as rd
+    from abc import ABC, abstractmethod
+    import numpy as np
+    import time
+    from enum import Enum
+    import os
+except ImportError as e:
+    print(f"Import error: {e}")
+    print("Make sure you have installed the required libraries from our user guide!")
+    print("You can install the required libraries using the command: !pip install library_name in a code cell.")
+    os._exit(0)
 
 # Initialize the pygame module with screen size, caption and color
 # Created by 5590073
-pg.init()
+try:
+    pg.init()
+except pg.error as e:
+    print(f"Error initializing pygame: {e}")
+    print("Make sure you have installed pygame!")
+    os._exit(0)
+
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -434,54 +446,57 @@ clock = pg.time.Clock()
 # Created by 5590073, edited by ...
 def main():
     """Main game loop."""
-    board = Board(ROWS, COLUMNS)
-    board.set_color(Color.WHITE.value)
-    board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE))
+    try:
+        board = Board(ROWS, COLUMNS)
+        board.set_color(Color.WHITE.value)
+        board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE))
 
-    player = Player(position=PLAYER_START_POSITION)
-    player.set_color(Color.PLAYER_COLOR.value)
-    player.current_cell = board.cells_list[1]
+        player = Player(position=PLAYER_START_POSITION)
+        player.set_color(Color.PLAYER_COLOR.value)
+        player.current_cell = board.cells_list[1]
 
-    progress_bar = ProgressBar((10, 10), (200, 20))
-    timer = Timer()
-    past_games_scores = []
+        progress_bar = ProgressBar((10, 10), (200, 20))
+        timer = Timer()
+        past_games_scores = []
 
-    generator = Generator(ROWS, COLUMNS, board=board)
-    snakes_coordinates = generator.get_entities_coordinates()
-    ladders_coordinates = generator.get_entities_coordinates()
+        generator = Generator(ROWS, COLUMNS, board=board)
+        snakes_coordinates = generator.get_entities_coordinates()
+        ladders_coordinates = generator.get_entities_coordinates()
+        
+        # Create snakes
+        for cells in snakes_coordinates:
+            bottom_coordinate, top_coordinate = cells
+                
+            snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+            if snake.put_on_board():
+                board.snakes.append(snake)
+            
+        # Create ladders       
+        for cells in ladders_coordinates:
+            bottom_coordinate, top_coordinate = cells
+                
+            ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
+            if ladder.put_on_board():
+                board.ladders.append(ladder)
 
-    # Create snakes
-    for cells in snakes_coordinates:
-        bottom_coordinate, top_coordinate = cells
+        # Created by 5590073
+        running = True
+        while running:
+            running = handle_events(player, board, timer, past_games_scores)
+            if running:
+                draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar)
+                update_game_state(player)
 
-        snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
-        if snake.put_on_board():
-            board.snakes.append(snake)
-
-    # Create ladders       
-    for cells in ladders_coordinates:
-        bottom_coordinate, top_coordinate = cells
-
-        ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
-        if ladder.put_on_board():
-            board.ladders.append(ladder)
-
-    # Created by 5590073
-    running = True
-    while running:
-        running = handle_events(player, board, timer, past_games_scores)
-        if running:
-            draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar,
-                            player.moves)
-            update_game_state(player)
-
-        # Update the display and set the frame rate
-        pg.display.flip()
-        clock.tick(60)
-    # Quit the pygame module at the end
-    pg.quit()
-    os._exit(0)
-
+            # Update the display and set the frame rate
+            pg.display.flip()
+            clock.tick(60)
+        # Quit the pygame module at the end
+        pg.quit()
+        os._exit(0)
+    except Exception as e:
+        print(f"Error in game loop: {e}")
+        pg.quit()
+        os._exit(0)
 
 # Created by 5590073, edited by 5555194
 def handle_events(player, board, timer, past_games_scores):
@@ -518,47 +533,51 @@ def handle_events(player, board, timer, past_games_scores):
 # Created by 5590073
 def update_game_state(player):
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
-        player.react_to_entity(player.current_cell.contents)
+        try:
+            player.react_to_entity(player.current_cell.contents)
+        except Exception as e:
+            print(f"Error reacting to entity: {e}")
 
 
 # Created by 5590073, edited by 5555194
 def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar, dice_value):
     """Draws the game state."""
-    # Each frame is filled with black color, so that the previous frame is not visible
-    screen.fill((0, 0, 0))
-    # Draw the board surface on the screen
-    screen.blit(board.surface, (250, 150))
-    board.update_cells()
-    # Draw the player on the screen
-    screen.blit(player.surface, player.rect)
-    # Draw the font on the screen
-    screen.blit(font_surface, (175, 50))
-    # Draw the timer on the screen
-    timer.draw()
-    # Draw the shortest distance on the screen
-    draw_shortest_distance()
-    # Draw the score on the screen
-    draw_score(player._score)
-    # Draw the test snakes and ladders
+    try:
+        # Each frame is filled with black color, so that the previous frame is not visible
+        screen.fill((0, 0, 0))
+        # Draw the board surface on the screen
+        screen.blit(board.surface, (250, 150))
+        board.update_cells()
+        # Draw the player on the screen
+        screen.blit(player.surface, player.rect)
+        # Draw the font on the screen
+        screen.blit(font_surface, (175, 50))
+        # Draw the timer on the screen
+        timer.draw()
+        # Draw the shortest distance on the screen
+        draw_shortest_distance()
+        # Draw the score on the screen
+        draw_score(player.score)
+        
+        # Draw the test snakes and ladders
+        for snake in board.snakes:
+            snake.draw()
 
-    for snake in board.snakes:
-        snake.draw()
+        for ladder in board.ladders:
+            ladder.draw()
 
-    for ladder in board.ladders:
-        ladder.draw()
-
-    # Create and update the progress bar
-    progress = player.current_cell.number / len(board.cells_list)
-    progress_bar.update(progress)
-    # Draw the updated progress bar on the screen
-    progress_bar.draw(screen)
-    draw_past_games_scores(past_games_scores)
-
-    # Draw the value after rolling the dice and shows how the dice is rolled
-    draw_dice_value(dice_value)
-    # Draws text to player to show how to restart the game
-    draw_restart()
-
+        # Create and update the progress bar
+        progress = player.current_cell.number / len(board.cells_list)
+        progress_bar.update(progress)
+        # Draw the updated progress bar on the screen
+        progress_bar.draw(screen)
+        draw_past_games_scores(past_games_scores)
+        # Draw the value after rolling the dice and shows how the dice is rolled
+        draw_dice_value(dice_value)
+        # Draws text to player to show how to restart the game
+        draw_restart()
+    except Exception as e:
+        print(f"Error drawing game state: {e}")
 
 if __name__ == "__main__":
     main()
