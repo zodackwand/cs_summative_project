@@ -239,8 +239,8 @@ class Player():
         self.rect.topleft = position
         self.position = position
         self.current_cell = current_cell
-        self.score = tot_score
-        self.num_snakes = 0
+        self._score = tot_score
+        self._num_snakes = 0
         self.moves = moves
 
     def set_position(self, array):
@@ -267,12 +267,12 @@ class Player():
     # (-5) when encountering Snake
     # score is doubled at end if no snakes were encountered
     def update_score(self, points: int = 0):
-        self.score += points
-        return self.score
+        self._score += points
+        return self._score
 
     # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self):
-        self.num_snakes += 1
+        self._num_snakes += 1
         return True
 
 
@@ -502,15 +502,15 @@ def handle_events(player, board, timer, past_games_scores):
                 else:
                     player.position = change_position_to_cell(player, board.cells_list[100])
                     # Special bonus (if player doesn't encounter any snakes score is doubled)
-                    if player.num_snakes == 0:
-                        player.update_score(player.score)
+                    if player._num_snakes == 0:
+                        player.update_score(player._score)
             # Reset button
             if event.key == pg.K_r:
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
-                    past_games_scores.append(player.update_score())
+                    past_games_scores.append(player._score)
                 player.position = change_position_to_cell(player, board.cells_list[1])
-                player.update_score((-1 * player.score) + 100)
+                player.update_score((-1 * player._score) + 100)
                 timer.reset()
     return True
 
@@ -538,7 +538,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
     # Draw the shortest distance on the screen
     draw_shortest_distance()
     # Draw the score on the screen
-    draw_score(player.score)
+    draw_score(player._score)
     # Draw the test snakes and ladders
 
     for snake in board.snakes:
