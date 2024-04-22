@@ -1,4 +1,3 @@
-# Created by 5590073
 try:
     import pygame as pg
     import random as rd
@@ -43,11 +42,13 @@ class Color(Enum):
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
+
+
 PLAYER_START_POSITION = [255, 425]
 
 
 # Main game board class
-# Created by 5590073 and 5588113
+# Created by 5590073
 class Board():
     """Represents the game board."""
 
@@ -59,7 +60,7 @@ class Board():
         self.snakes = []
         self.ladders = []
         self.shortest_distance = None
-    # Created by 5590073
+
     def create_cells(self, coordinates_array):
         """Creates the cells for the board."""
         number_of_cells_on_board = self.rows * self.columns
@@ -128,7 +129,7 @@ def roll_dice():
     return rd.randint(1, 6)
 
 
-# Created by 5590073 and 5588113
+# Created by 5590073 and edited by 5555194
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -149,7 +150,7 @@ class Entity(ABC):
         pass
 
 
-# Created by 5590073 and 5588113
+# Created by 5590073 and edited by 5555194
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -170,7 +171,7 @@ class Snake(Entity):
         return False
 
 
-# Created by 5590073 and 5588113
+# Created by 5590073 and edited by 5555194
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -396,10 +397,11 @@ class Generator:
             if ladder.put_on_board():
                 board.ladders.append(ladder)
 
+    # Created by 5590073, edited by ...
 
 
-# Created by 5590073 and 5555194
 class Player():
+    # Created by 5555294
     """
         Represents the player in the game
         _score : the total score of the player (private)
@@ -407,7 +409,7 @@ class Player():
         moves: will later be the dice value when rolled
     """
 
-    # Created by 5590073, edited by 5555194
+    # Created by ... edited by 5555194
     def __init__(self, position=[0, 0], current_cell=None, tot_score=100, moves=0):
         self.surface = pg.Surface([CELL_SIZE_PIXELS, CELL_SIZE_PIXELS])
         self.rect = self.surface.get_rect()
@@ -417,15 +419,15 @@ class Player():
         self._score = tot_score
         self.moves = moves
         self.num_snakes = 0
-    # Created by 5590073
+
     def set_position(self, position_array):
         self.position = position_array
         self.rect.topleft = position_array
-    # Created by 5590073
+
     def set_color(self, color_array):
         self.surface.fill(color_array)
 
-    # Created by 5555194 and 5590073
+    # Created by 5555194
     # Score will update each time the player encounters an entity
     def react_to_entity(self, entity) -> None:
         if isinstance(entity, Snake):
@@ -436,26 +438,26 @@ class Player():
             self.position = change_position_to_cell(self, entity.end_cell)
             self.update_score(+5)
         return None
-    # Created by 5555194
+
     # A method to get the player's score
     def get_score(self) -> int:
         return self._score
-    # Created by 5555194
+
     # A method to update the player's score during the game to for display in the end
     def update_score(self, points: int = 0) -> int:
         self._score += points
         return self._score
-    # Created by 5555194
+
     # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self) -> None:
         self.num_snakes += 1
         return None
-    # Created by 5555194
+
     # A method to reset the num_snakes variable back to zero
     def reset_num_snakes(self) -> None:
         self.num_snakes = 0
         return None
-    # Created by 5555194
+
     # A method to reset the player's score back to 100
     def reset_score(self) -> None:
         self._score = 100
@@ -584,6 +586,20 @@ def draw_restart() -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
+# Created by 5590073
+def quicksort(arr: list[int], ascending: bool = True) -> list[int]:
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    if ascending:
+        left = [x for x in arr if x < pivot]
+        middle = [x for x in arr if x == pivot]
+        right = [x for x in arr if x > pivot]
+    else:
+        left = [x for x in arr if x > pivot]
+        middle = [x for x in arr if x == pivot]
+        right = [x for x in arr if x < pivot]
+    return quicksort(left, ascending) + middle + quicksort(right, ascending)
 
 # Function to draw the past games score on the screen. past_games_score is a list of times.
 # Created by 5590073, edited by 5555194
@@ -591,25 +607,30 @@ def draw_past_games_scores(past_games_scores: list[int]) -> None:
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
     # Sort the past games time in ascending order
-    past_games_scores = quicksort(past_games_scores)
+    past_games_scores = quicksort(past_games_scores, ascending=False)
     for i, score in enumerate(past_games_scores):
-        text_surface = font.render(f"Game {i + 1} score: {score}", True,
+        text_surface = font.render(f"Best score {i + 1}: {score}", True,
                                    Color.WHITE.value)  # Create a surface with the text
         text_rect = text_surface.get_rect(
             topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
 
+# Function to draw the past games score on the screen. past_games_score is a list of times.
+# Created by 5590073, edited by 5555194
+def draw_past_games_times(past_games_times: list[int]) -> None:
+    font = pg.font.Font(None, 15)  # Create a font object
+    y_position = 80
+    # Sort the past games time in ascending order
+    past_games_times = quicksort(past_games_times, ascending=True)
+    for i, time in enumerate(past_games_times):
+        text_surface = font.render(f"Best time {i + 1}: {time}", True,
+                                   Color.WHITE.value)  # Create a surface with the text
+        text_rect = text_surface.get_rect(
+            topleft=(10, y_position))  # Position the text at the top right corner of the screen
+        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+        y_position += 10
 
-# Created by 5590073
-def quicksort(arr: list[int]) -> list[int]:
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left = [x for x in arr if x > pivot]
-    middle = [x for x in arr if x == pivot]
-    right = [x for x in arr if x < pivot]
-    return quicksort(left) + middle + quicksort(right)
 
 
 # Create a font object to render the text on the screen
@@ -634,6 +655,7 @@ def main():
         progress_bar = ProgressBar((10, 10), (200, 20))
         timer = Timer()
         past_games_scores = []
+        past_games_times = []
 
         # Generate snakes and ladders
         generator = Generator(board=board)
@@ -648,10 +670,15 @@ def main():
         # Created by 5590073
         running = True
         while running:
-            running = handle_events(player, board, timer, past_games_scores)
+            running = handle_events(player, board, timer, past_games_scores, past_games_times)
             if running:
-                draw_game_state(player, board, timer, past_games_scores, board.snakes, board.ladders, progress_bar
-                                , player.moves)
+                draw_game_state(player,
+                                board,
+                                timer,
+                                past_games_scores,
+                                progress_bar,
+                                player.moves,
+                                past_games_times)
                 update_game_state(player)
 
             # Update the display and set the frame rate
@@ -666,7 +693,7 @@ def main():
         os._exit(0)
 
 # Created by 5590073, edited by 5555194 and 5588113
-def handle_events(player, board, timer, past_games_scores):
+def handle_events(player, board, timer, past_games_scores, past_games_times):
     """Handles game events."""
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -694,6 +721,7 @@ def handle_events(player, board, timer, past_games_scores):
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
                     past_games_scores.append(player._score)
+                    past_games_times.append(timer.get_elapsed_time())
                 # Clear the board
                 board.cells_list = {}
                 board.snakes = []
@@ -730,7 +758,7 @@ def update_game_state(player):
 
 
 # Created by 5590073, edited by 5555194
-def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, progress_bar, dice_value):
+def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_value, past_games_times):
     """Draws the game state."""
     try:
         # Each frame is filled with black color, so that the previous frame is not visible
@@ -762,6 +790,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
         # Draw the updated progress bar on the screen
         progress_bar.draw(screen)
         draw_past_games_scores(past_games_scores)
+        draw_past_games_times(past_games_times)
         # Draw the value after rolling the dice and shows how the dice is rolled
         draw_dice_value(dice_value)
         # Draws text to player to show how to restart the game
