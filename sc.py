@@ -50,7 +50,17 @@ PLAYER_START_POSITION = [255, 425]
 # Main game board class
 # Created by 5590073
 class Board():
-    """Represents the game board."""
+    """Represents the game board.
+
+    Attributes:
+        rows (int): The number of rows in the board.
+        columns (int): The number of columns in the board.
+        cells_list (dict): A dictionary of cells with their respective positions.
+        surface (pygame.Surface): The surface representing the board.
+        snakes (list): A list of Snake objects on the board.
+        ladders (list): A list of Ladder objects on the board.
+        shortest_distance (int): The shortest distance between the start cell and end cell.
+    """
 
     def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE_PIXELS, gap=GAP_PIXELS):
         self.rows = rows
@@ -62,7 +72,11 @@ class Board():
         self.shortest_distance = None
 
     def create_cells(self, coordinates_array):
-        """Creates the cells for the board."""
+        """
+        Creates the cells for the board.
+
+        coordinates_array: An array of coordinates for the cells.
+        """
         number_of_cells_on_board = self.rows * self.columns
         # Create a dictionary of cells (cells_list) with their respective positions from the coordinates_array
         for i in range(1, number_of_cells_on_board + 1):
@@ -73,6 +87,9 @@ class Board():
             self.cells_list[i].number = i
 
     def update_cells(self):
+        """
+        Updates the cells on the board. This includes updating the surface of each cell and rendering the text on each cell.
+        """
         font = pg.font.Font(None, 15)
         for i in range(1, len(self.cells_list) + 1):
             # Update the surface (skin) of each cell on the screen
@@ -83,11 +100,21 @@ class Board():
             screen.blit(text_surface, text_rect)
 
     def set_color(self, color_array):
+        """
+        Sets the color of the board.
+
+        color_array: An array representing the color.
+        """
         self.surface.fill(color_array)
     
     # Created by 5588113  
     def create_board_graph(self) -> dict:
-        """Create a graph representing connections between cells."""
+        """Create a graph representing connections between cells.
+
+        The graph is stored in the board object.
+
+        return: A dictionary representing the graph.
+        """
         board_graph = {}
         for cell_number, cell in self.cells_list.items():
             board_graph[cell_number] = []
@@ -106,7 +133,10 @@ class Board():
 
     # Created by 5588113
     def calculate_shortest_path(self, start_cell_number: int, end_cell_number: int) -> None:
-        """Calculate the shortest path between two cells using BFS."""
+        """Calculate the shortest path between two cells using BFS.
+        
+        The shortest distance is stored in the board object.
+        """
         if self.board_graph is None:
             raise ValueError("Board graph not initialized. Call create_board_graph() first.")
 
@@ -403,7 +433,7 @@ class Generator:
 class Player():
     # Created by 5555294
     """
-        Represents the player in the game
+        Represents the player on the board
         _score : the total score of the player (private)
         num_snakes: how many snakes the player encounters during the game (if 0 points will double in the end)
         moves: will later be the dice value when rolled
@@ -467,7 +497,24 @@ class Player():
 # The board consists of cells, which are the squares
 # Created by 5590073
 class Cell():
+    """
+    Represents a cell on the game board.
+
+    Attributes:
+        surface (pygame.Surface): The surface representing the cell.
+        rect (pygame.Rect): The rectangle representing the cell.
+        position (list): The position of the cell on the board.
+        contents (Entity): The entity (if any) contained in the cell.
+        number (int): The number of the cell.
+    """
     def __init__(self, size=[CELL_SIZE_PIXELS, CELL_SIZE_PIXELS], position=[0, 0], contents=None):
+        """
+        Initializes the Cell with the given size, position, and contents.
+
+        size: The size of the cell in pixels.
+        position: The position of the cell on the board.
+        contents: The entity (if any) contained in the cell.
+        """
         self.surface = pg.Surface(size)
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
@@ -476,15 +523,35 @@ class Cell():
         self.number = None
 
     def set_color(self, color_array):
+        """
+        Sets the color of the cell.
+
+        color_array: An array representing the color.
+        """
         self.surface.fill(color_array)
 
     def set_position(self, position_array):
+        """
+        Sets the position of the cell.
+
+        position_array: An array representing the position.
+        """
         self.position = position_array
         self.rect.topleft = position_array
 
 
 # Created by 5590073
 class ProgressBar:
+    """
+    Represents a progress bar in the game.
+
+    Attributes:
+        position (tuple): The position of the progress bar on the screen.
+        size (tuple): The size of the progress bar.
+        color (tuple): The color of the progress bar.
+        bg_color (tuple): The background color of the progress bar.
+        progress (float): The current progress, ranging from 0 to 1.
+    """
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
         self.size = size
@@ -493,9 +560,19 @@ class ProgressBar:
         self.progress = 0  # Progress ranges from 0 to 1
 
     def update(self, progress):
+        """
+        Updates the progress of the progress bar.
+
+        progress: The new progress, ranging from 0 to 1.
+        """
         self.progress = progress
 
     def draw(self, screen):
+        """
+        Draws the progress bar on the screen.
+
+        screen: The pygame.Surface object representing the screen.
+        """
         # Draw the background
         pg.draw.rect(screen, self.bg_color, (*self.position, *self.size))
         # Draw the progress bar
@@ -504,27 +581,55 @@ class ProgressBar:
 
 # Created by 5590073
 class Timer:
+    """
+    Represents a timer in the game.
+
+    Attributes:
+        start_time (float): The start time of the timer.
+    """
     def __init__(self):
         self.start_time = time.time()
 
     def get_elapsed_time(self):
+        """
+        Returns the elapsed time since the timer was started.
+
+        The elapsed time in seconds (int).
+        """
         # Return the elapsed time in seconds (int)
         return int(time.time() - self.start_time)
 
     def draw(self):
+        """
+        Draws the timer on the screen.
+        """
         font = pg.font.Font(None, 15)
         text_surface = font.render(f"Timer: {self.get_elapsed_time()}", True, Color.WHITE.value)
         text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 10))
         screen.blit(text_surface, text_rect)
 
     def reset(self):
+        """
+        Resets the timer to the current time.
+        """
         self.start_time = time.time()
 
 
-# Function to generate the coordinates of the cells on the board
 # Created by 5590073
-def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int = 255, start_y: int = 425) -> list[
-    list[int]]:
+def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int = 255, start_y: int = 425) -> list[list[int]]:
+    """
+    Generates a list of coordinates for a grid of cells.
+
+    The function calculates the x and y coordinates for each cell in a grid, given the number of rows and columns,
+    the size of each cell, and the starting x and y coordinates. The coordinates are calculated in pixels.
+
+    rows: The number of rows in the grid.
+    columns: The number of columns in the grid.
+    cell_size: The size of each cell in pixels.
+    start_x: The x-coordinate of the top-left cell in the grid. Defaults to 255.
+    start_y: The y-coordinate of the top-left cell in the grid. Defaults to 425.
+    return: A list of [x, y] coordinates for each cell in the grid.
+    """
     cells_coordinates = []
     gap = 5
     for row in range(rows):
@@ -534,19 +639,34 @@ def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int =
             cells_coordinates.append([x, y])
     return cells_coordinates
 
-
-# Function to change the player position to the chosen cell position
 # Created by 5590073
 def change_position_to_cell(player: Player, cell: Cell) -> tuple[int, int]:
+    """
+    Changes the position of the player to the position of a specified cell.
+
+    This function updates the player's rectangle's top-left position, the player's position attribute, 
+    and the player's current cell attribute to match the specified cell. It then returns the new top-left 
+    position of the player's rectangle.
+
+    player: The Player object whose position is to be changed.
+    cell: The Cell object to which the player's position is to be changed.
+    return: A tuple representing the new top-left position of the player's rectangle.
+    """
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
     player.current_cell = cell
     return player.rect.topleft
 
-
-# Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
 # Created by 5590073
 def draw_shortest_distance(value: int = 0) -> None:
+    """
+    Draws the shortest possible number of steps from start to end.
+
+    This function creates a text surface with the minimum possible number of steps, 
+    positions it at the top right corner of the screen, and then blits this surface onto the screen.
+
+    value: The minimum possible number of steps. Defaults to 0.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Minimum possible number of steps: {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
@@ -555,9 +675,16 @@ def draw_shortest_distance(value: int = 0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 
-# Function to draw the score on the screen. value is the score.
 # Created by 5590073
 def draw_score(value: int = 0) -> None:
+    """
+    Draws the current score on the screen.
+
+    This function creates a text surface with the current score, positions it at the top right corner of the screen, 
+    and then blits this surface onto the screen.
+
+    The current score. Defaults to 0.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(
@@ -568,6 +695,14 @@ def draw_score(value: int = 0) -> None:
 # Function to draw the dice value on screen
 # Created by 5555194
 def draw_dice_value(value: int = 0) -> None:
+    """
+    Draws the current dice value on the screen.
+
+    This function creates a text surface with the current dice value, positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+
+    value: The current dice value. Defaults to 0.
+    """
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press SPACE to roll the dice : {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
@@ -575,10 +710,14 @@ def draw_dice_value(value: int = 0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
-
-# Function to draw the restart message on screen. Guides the player.
 # Created by 5555194
 def draw_restart() -> None:
+    """
+    Draws a restart message on the screen.
+
+    This function creates a text surface with the message "Press R to restart", positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+    """
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press R to restart", True,
                                Color.WHITE.value)  # Create a surface with the text
@@ -588,6 +727,13 @@ def draw_restart() -> None:
 
 # Created by 5590073
 def quicksort(arr: list[int], ascending: bool = True) -> list[int]:
+    """
+    Sorts a list of integers in ascending or descending order using the quicksort algorithm.
+
+    arr: The list of integers to be sorted.
+    ascending: A boolean indicating whether the list should be sorted in ascending order. Defaults to True.
+    return: The sorted list of integers.
+    """
     if len(arr) <= 1:
         return arr
     pivot = arr[len(arr) // 2]
@@ -601,9 +747,15 @@ def quicksort(arr: list[int], ascending: bool = True) -> list[int]:
         right = [x for x in arr if x < pivot]
     return quicksort(left, ascending) + middle + quicksort(right, ascending)
 
-# Function to draw the past games score on the screen. past_games_score is a list of times.
 # Created by 5590073, edited by 5555194
 def draw_past_games_scores(past_games_scores: list[int]) -> None:
+    """
+    Draws the past game scores on the screen.
+
+    This function sorts the scores in descending order and displays them at the top right corner of the screen.
+
+    past_games_scores: A list of past game scores.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
     # Sort the past games time in ascending order
@@ -619,6 +771,13 @@ def draw_past_games_scores(past_games_scores: list[int]) -> None:
 # Function to draw the past games score on the screen. past_games_score is a list of times.
 # Created by 5590073, edited by 5555194
 def draw_past_games_times(past_games_times: list[int]) -> None:
+    """
+    Draws the past game times on the screen.
+
+    This function sorts the times in ascending order and displays them at the top left corner of the screen.
+
+    past_games_times: A list of past game times.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 80
     # Sort the past games time in ascending order
@@ -694,7 +853,16 @@ def main():
 
 # Created by 5590073, edited by 5555194 and 5588113
 def handle_events(player, board, timer, past_games_scores, past_games_times):
-    """Handles game events."""
+    """
+    Handles game events such as player movements, game reset, and game quit.
+
+    player: The Player object representing the player.
+    board: The Board object representing the game board.
+    timer: The Timer object representing the game timer.
+    past_games_scores: A list of scores from past games.
+    past_games_times: A list of times from past games.
+    return: False if the game is quit, True otherwise.
+    """
     for event in pg.event.get():
         if event.type == pg.QUIT:
             return False
@@ -750,6 +918,14 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
 
 # Created by 5590073
 def update_game_state(player):
+    """
+    Updates the game state based on the player's current cell.
+
+    If the player's current cell contains an entity and the player is at the start of the entity, 
+    the player reacts to the entity.
+
+    player: The Player object representing the player.
+    """
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         try:
             player.react_to_entity(player.current_cell.contents)
@@ -759,7 +935,20 @@ def update_game_state(player):
 
 # Created by 5590073, edited by 5555194
 def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_value, past_games_times):
-    """Draws the game state."""
+    """
+    Draws the current game state on the screen.
+
+    This includes the game board, player, timer, shortest distance, score, progress bar, past game scores, 
+    past game times, dice value, and restart message.
+
+    player: The Player object representing the player.
+    board: The Board object representing the game board.
+    timer: The Timer object representing the game timer.
+    past_games_scores: A list of scores from past games.
+    progress_bar: The ProgressBar object representing the game progress bar.
+    dice_value: The current dice value.
+    past_games_times: A list of times from past games.
+    """
     try:
         # Each frame is filled with black color, so that the previous frame is not visible
         screen.fill((0, 0, 0))
