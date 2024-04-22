@@ -1062,8 +1062,8 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.reset_score()
                 player.reset_num_snakes()
-            # Undo button
-            if event.key == pg.K_u:
+            # Undo button works when the player is not at the start cell (so the player can't undo the first move)
+            if event.key == pg.K_u and player.current_cell != board.cells_list[1]:
                 player.undo()
     return True
 
