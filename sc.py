@@ -459,6 +459,7 @@ class Player():
         self.moves = moves
         self.num_snakes = 0
         self.number_steps_made = 0
+        self.history_stack = []
     # Created by 5590073
     def set_position(self, position_array):
         self.position = position_array
@@ -466,6 +467,11 @@ class Player():
     # Created by 5590073
     def set_color(self, color_array):
         self.surface.fill(color_array)
+
+    def undo(self):
+        if self.history_stack:
+            self.position, self._score, self.moves, self.number_steps_made, self.num_snakes, self.current_cell = self.history_stack.pop()
+            self.rect.topleft = self.position
 
     # Created by 5555194 and 5590073
     # Score will update each time the player encounters an entity
@@ -668,6 +674,8 @@ def change_position_to_cell(player: Player, cell: Cell) -> tuple[int, int]:
     cell: The Cell object to which the player's position is to be changed.
     return: A tuple representing the new top-left position of the player's rectangle.
     """
+    player.history_stack.append((player.position, player._score, player.moves, player.number_steps_made, player.num_snakes, player.current_cell))
+    player.number_steps_made += 1
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
     player.current_cell = cell
@@ -903,7 +911,7 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 logging.info('SPACE was pressed')
                 # Change the player position based on the dice roll
                 player.moves = roll_dice()
-                player.number_steps_made += 1
+                
                 current_cell_number = player.current_cell.number
                 next_cell_number = current_cell_number + player.moves
                 # Ensure that the player does not move beyond the last cell
@@ -950,6 +958,8 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 player.reset_score()
                 player.reset_num_snakes()
                 timer.reset()
+            if event.key == pg.K_u:
+                player.undo()
     return True
 
 
