@@ -449,6 +449,7 @@ class Player():
         self._score = tot_score
         self.moves = moves
         self.num_snakes = 0
+        self.number_steps_made = 0
     # Created by 5590073
     def set_position(self, position_array):
         self.position = position_array
@@ -705,7 +706,23 @@ def draw_dice_value(value: int = 0) -> None:
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press SPACE to roll the dice : {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH - 35, 250))  # Position the text at the mid right
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 180))  # Position the text at the mid right
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+    return None
+
+def draw_number_steps_made(player) -> None:
+    """
+    Draws the number of steps made by the player on the screen.
+
+    This function creates a text surface with the number of steps made by the player, positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+
+    player: The Player object representing the player.
+    """
+    font = pg.font.Font(None, 15)  # Create a font object
+    text_surface = font.render(f"Number of steps made : {player.number_steps_made}", True,
+                               Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(topleft=(10, 50))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
@@ -720,7 +737,7 @@ def draw_restart() -> None:
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press R to restart", True,
                                Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH - 75, 270))  # Position the text at the mid right
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 200))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
@@ -788,6 +805,7 @@ def draw_past_games_times(past_games_times: list[int]) -> None:
             topleft=(10, y_position))  # Position the text at the top right corner of the screen
         screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
         y_position += 10
+
 
 # Create a font object to render the text on the screen
 # Created by 5590073
@@ -867,6 +885,7 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
             if event.key == pg.K_SPACE:
                 # Change the player position based on the dice roll
                 player.moves = roll_dice()
+                player.number_steps_made += 1
                 current_cell_number = player.current_cell.number
                 next_cell_number = current_cell_number + player.moves
                 # Ensure that the player does not move beyond the last cell
@@ -906,6 +925,7 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.update_score((-1 * player._score) + 100)
                 timer.reset()
+                player.number_steps_made = 0
                 
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.reset_score()
@@ -978,6 +998,7 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         progress_bar.draw(screen)
         draw_past_games_scores(past_games_scores)
         draw_past_games_times(past_games_times)
+        draw_number_steps_made(player)
         # Draw the value after rolling the dice and shows how the dice is rolled
         draw_dice_value(dice_value)
         # Draws text to player to show how to restart the game
