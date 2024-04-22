@@ -5,6 +5,7 @@ try:
     import numpy as np
     import time
     from enum import Enum
+    from collections import deque
     import os
 except ImportError as e:
     print(f"Import error: {e}")
@@ -58,6 +59,7 @@ class Board():
         self.surface = pg.Surface((rows * (cell_size + gap) + gap, rows * (cell_size + gap) + gap))
         self.snakes = []
         self.ladders = []
+        self.shortest_distance = None
 
     def create_cells(self, coordinates_array):
         """Creates the cells for the board."""
@@ -82,6 +84,44 @@ class Board():
 
     def set_color(self, color_array):
         self.surface.fill(color_array)
+    
+    # Created by 5588113  
+    def create_board_graph(self) -> dict:
+        """Create a graph representing connections between cells."""
+        board_graph = {}
+        for cell_number, cell in self.cells_list.items():
+            board_graph[cell_number] = []
+            # If ladder detected and node is not an end_cell, append ladder's end to the node
+            if cell.contents is not None and isinstance(cell.contents, Ladder) and cell_number != cell.contents.end_cell.number:
+                board_graph[cell_number].append(cell.contents.end_cell.number)
+            else:
+                for i in range(1, 7):  # Possible dice roll values
+                    next_cell_number = cell_number + i
+                    if next_cell_number <= 100:
+                        if self.cells_list[next_cell_number].contents is not None:
+                            next_cell_number = self.cells_list[next_cell_number].contents.end_cell.number
+                        board_graph[cell_number].append(next_cell_number)
+        self.board_graph = board_graph  # Store board graph in the board object
+        return board_graph
+
+    # Created by 5588113
+    def calculate_shortest_path(self, start_cell_number: int, end_cell_number: int) -> None:
+        """Calculate the shortest path between two cells using BFS."""
+        if self.board_graph is None:
+            raise ValueError("Board graph not initialized. Call create_board_graph() first.")
+
+        visited = set()
+        queue = deque([(start_cell_number, 0)])  # (cell_number, distance)
+        while queue:
+            cell_number, distance = queue.popleft()
+            if cell_number == end_cell_number:
+                self.shortest_distance = distance
+                return
+            visited.add(cell_number)
+            for neighbor_cell in self.board_graph[cell_number]:
+                if neighbor_cell not in visited:
+                    queue.append((neighbor_cell, distance + 1))
+        return # No path found
 
 
 # Created by 5590073
@@ -589,6 +629,11 @@ def main():
         generator.create_snakes_on_board(board=board)
         generator.create_ladders_on_board(board=board)
 
+        # Create the adjacency list
+        board.create_board_graph()
+        # Calculate the shortest path
+        shortest_path_length = board.calculate_shortest_path(start_cell_number=1, end_cell_number=ROWS*COLUMNS)
+        
         # Created by 5590073
         running = True
         while running:
@@ -644,6 +689,10 @@ def handle_events(player, board, timer, past_games_scores):
                 generator = Generator(board=board)
                 generator.create_snakes_on_board(board=board)
                 generator.create_ladders_on_board(board=board)
+                # Recreate the adjacency list
+                board.create_board_graph()
+                # Recalculate the shortest path
+                shortest_path_length = board.calculate_shortest_path(start_cell_number=1, end_cell_number=ROWS*COLUMNS)            
                 # Reset player position and score
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.update_score((-1 * player._score) + 100)
@@ -679,7 +728,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
         # Draw the timer on the screen
         timer.draw()
         # Draw the shortest distance on the screen
-        draw_shortest_distance()
+        draw_shortest_distance(board.shortest_distance)
         # Draw the score on the screen
         draw_score(player._score)
         
