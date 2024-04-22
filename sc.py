@@ -8,11 +8,15 @@ try:
     from enum import Enum
     from collections import deque
     import os
+    import logging
 except ImportError as e:
     print(f"Import error: {e}")
     print("Make sure you have installed the required libraries from our user guide!")
     print("You can install the required libraries using the command: !pip install library_name in a code cell.")
     os._exit(0)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
 # Initialize the pygame module with screen size, caption and color
 # Created by 5590073
@@ -64,6 +68,7 @@ class Board():
     """
     # Created by 5590073
     def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE_PIXELS, gap=GAP_PIXELS):
+        logging.info('Initializing Board')
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
@@ -78,6 +83,7 @@ class Board():
 
         coordinates_array: An array of coordinates for the cells.
         """
+        logging.info('Creating cells')
         number_of_cells_on_board = self.rows * self.columns
         # Create a dictionary of cells (cells_list) with their respective positions from the coordinates_array
         for i in range(1, number_of_cells_on_board + 1):
@@ -116,6 +122,7 @@ class Board():
 
         return: A dictionary representing the graph.
         """
+        logging.info('Creating board graph')
         board_graph = {}
         for cell_number, cell in self.cells_list.items():
             board_graph[cell_number] = []
@@ -406,6 +413,7 @@ class Generator:
         Args:
             board (Board): The game board where the snakes will be placed.
         """
+        logging.info('Creating snakes on the game board')
         snakes_coordinates = self._get_entities_coordinates
         for cells in self._get_entities_coordinates():
             bottom_coordinate, top_coordinate = cells
@@ -421,6 +429,7 @@ class Generator:
         Args:
             board (Board): The game board where the ladders will be placed.
         """
+        logging.info('Creating ladders on the game board')
         for cells in self._get_entities_coordinates():
             bottom_coordinate, top_coordinate = cells
             
@@ -460,6 +469,7 @@ class Player():
     # Created by 5555194 and 5590073
     # Score will update each time the player encounters an entity
     def react_to_entity(self, entity) -> None:
+        logging.info('Player reacting to entity')
         if isinstance(entity, Snake):
             self.position = change_position_to_cell(self, entity.end_cell)
             self.snake_encountered()
@@ -475,21 +485,25 @@ class Player():
     # Created by 5555194
     # A method to update the player's score during the game to for display in the end
     def update_score(self, points: int = 0) -> int:
+        logging.info('Updating Player score')
         self._score += points
         return self._score
     # Created by 5555194
     # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self) -> None:
+        logging.info('Player encountered a snake')
         self.num_snakes += 1
         return None
     # Created by 5555194
     # A method to reset the num_snakes variable back to zero
     def reset_num_snakes(self) -> None:
+        logging.info('Resetting number of snakes encountered')
         self.num_snakes = 0
         return None
     # Created by 5555194
     # A method to reset the player's score back to 100
     def reset_score(self) -> None:
+        logging.info('Resetting Player score')
         self._score = 100
         return None
 
@@ -630,6 +644,7 @@ def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int =
     start_y: The y-coordinate of the top-left cell in the grid. Defaults to 425.
     return: A list of [x, y] coordinates for each cell in the grid.
     """
+    logging.info('Generating coordinates')
     cells_coordinates = []
     gap = 5
     for row in range(rows):
@@ -799,6 +814,7 @@ clock = pg.time.Clock()
 def main():
     """Main game loop."""
     try:
+        logging.info('Generating coordinates')
         board = Board(ROWS, COLUMNS)
         board.set_color(Color.WHITE.value)
         board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE_PIXELS))
@@ -840,6 +856,7 @@ def main():
             pg.display.flip()
             clock.tick(60)
         # Quit the pygame module at the end
+        logging.info('Quitting game')
         pg.quit()
         os._exit(0)
     except Exception as e:
@@ -865,6 +882,7 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
         if event.type == pg.KEYDOWN:
             # If the key is the space bar
             if event.key == pg.K_SPACE:
+                logging.info('SPACE was pressed')
                 # Change the player position based on the dice roll
                 player.moves = roll_dice()
                 current_cell_number = player.current_cell.number
@@ -884,6 +902,7 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                     pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_r))
             # Reset button
             if event.key == pg.K_r:
+                logging.info('R was pressed')
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
                     past_games_scores.append(player._score)
