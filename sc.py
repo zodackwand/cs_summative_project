@@ -1,3 +1,4 @@
+# Created by 5590073
 try:
     import pygame as pg
     import random as rd
@@ -7,11 +8,15 @@ try:
     from enum import Enum
     from collections import deque
     import os
+    import logging
 except ImportError as e:
     print(f"Import error: {e}")
     print("Make sure you have installed the required libraries from our user guide!")
     print("You can install the required libraries using the command: !pip install library_name in a code cell.")
     os._exit(0)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
 # Initialize the pygame module with screen size, caption and color
 # Created by 5590073
@@ -48,11 +53,22 @@ PLAYER_START_POSITION = [255, 425]
 
 
 # Main game board class
-# Created by 5590073
+# Created by 5590073 and 5588113
 class Board():
-    """Represents the game board."""
+    """Represents the game board.
 
+    Attributes:
+        rows (int): The number of rows in the board.
+        columns (int): The number of columns in the board.
+        cells_list (dict): A dictionary of cells with their respective positions.
+        surface (pygame.Surface): The surface representing the board.
+        snakes (list): A list of Snake objects on the board.
+        ladders (list): A list of Ladder objects on the board.
+        shortest_distance (int): The shortest distance between the start cell and end cell.
+    """
+    # Created by 5590073
     def __init__(self, rows: int, columns: int, cells_list={}, cell_size=CELL_SIZE_PIXELS, gap=GAP_PIXELS):
+        logging.info('Initializing Board')
         self.rows = rows
         self.columns = columns
         self.cells_list = cells_list
@@ -60,9 +76,14 @@ class Board():
         self.snakes = []
         self.ladders = []
         self.shortest_distance = None
-
+    # Created by 5590073
     def create_cells(self, coordinates_array):
-        """Creates the cells for the board."""
+        """
+        Creates the cells for the board.
+
+        coordinates_array: An array of coordinates for the cells.
+        """
+        logging.info('Creating cells')
         number_of_cells_on_board = self.rows * self.columns
         # Create a dictionary of cells (cells_list) with their respective positions from the coordinates_array
         for i in range(1, number_of_cells_on_board + 1):
@@ -71,8 +92,11 @@ class Board():
             self.cells_list[i] = Cell(position=coordinates)
             self.cells_list[i].set_color(Color.BLACK.value)
             self.cells_list[i].number = i
-
+    # Created by 5590073
     def update_cells(self):
+        """
+        Updates the cells on the board. This includes updating the surface of each cell and rendering the text on each cell.
+        """
         font = pg.font.Font(None, 15)
         for i in range(1, len(self.cells_list) + 1):
             # Update the surface (skin) of each cell on the screen
@@ -81,13 +105,24 @@ class Board():
             text_surface = font.render(str(i), False, Color.WHITE.value)
             text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
             screen.blit(text_surface, text_rect)
-
+    # Created by 5590073
     def set_color(self, color_array):
+        """
+        Sets the color of the board.
+
+        color_array: An array representing the color.
+        """
         self.surface.fill(color_array)
     
     # Created by 5588113  
     def create_board_graph(self) -> dict:
-        """Create a graph representing connections between cells."""
+        """Create a graph representing connections between cells.
+
+        The graph is stored in the board object.
+
+        return: A dictionary representing the graph.
+        """
+        logging.info('Creating board graph')
         board_graph = {}
         for cell_number, cell in self.cells_list.items():
             board_graph[cell_number] = []
@@ -106,7 +141,10 @@ class Board():
 
     # Created by 5588113
     def calculate_shortest_path(self, start_cell_number: int, end_cell_number: int) -> None:
-        """Calculate the shortest path between two cells using BFS."""
+        """Calculate the shortest path between two cells using BFS.
+        
+        The shortest distance is stored in the board object.
+        """
         if self.board_graph is None:
             raise ValueError("Board graph not initialized. Call create_board_graph() first.")
 
@@ -129,7 +167,7 @@ def roll_dice():
     return rd.randint(1, 6)
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -150,7 +188,7 @@ class Entity(ABC):
         pass
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -171,7 +209,7 @@ class Snake(Entity):
         return False
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -375,6 +413,7 @@ class Generator:
         Args:
             board (Board): The game board where the snakes will be placed.
         """
+        logging.info('Creating snakes on the game board')
         snakes_coordinates = self._get_entities_coordinates
         for cells in self._get_entities_coordinates():
             bottom_coordinate, top_coordinate = cells
@@ -390,6 +429,7 @@ class Generator:
         Args:
             board (Board): The game board where the ladders will be placed.
         """
+        logging.info('Creating ladders on the game board')
         for cells in self._get_entities_coordinates():
             bottom_coordinate, top_coordinate = cells
             
@@ -397,19 +437,18 @@ class Generator:
             if ladder.put_on_board():
                 board.ladders.append(ladder)
 
-    # Created by 5590073, edited by ...
 
 
+# Created by 5590073, edited by 5555194
 class Player():
-    # Created by 5555294
     """
-        Represents the player in the game
+        Represents the player on the board
         _score : the total score of the player (private)
         num_snakes: how many snakes the player encounters during the game (if 0 points will double in the end)
         moves: will later be the dice value when rolled
     """
 
-    # Created by ... edited by 5555194
+    # Created by 5590073 edited by 5555194
     def __init__(self, position=[0, 0], current_cell=None, tot_score=100, moves=0):
         self.surface = pg.Surface([CELL_SIZE_PIXELS, CELL_SIZE_PIXELS])
         self.rect = self.surface.get_rect()
@@ -419,17 +458,25 @@ class Player():
         self._score = tot_score
         self.moves = moves
         self.num_snakes = 0
-
+        self.number_steps_made = 0
+        self.history_stack = []
+    # Created by 5590073
     def set_position(self, position_array):
         self.position = position_array
         self.rect.topleft = position_array
-
+    # Created by 5590073
     def set_color(self, color_array):
         self.surface.fill(color_array)
 
-    # Created by 5555194
+    def undo(self):
+        if self.history_stack:
+            self.position, self._score, self.moves, self.number_steps_made, self.num_snakes, self.current_cell = self.history_stack.pop()
+            self.rect.topleft = self.position
+
+    # Created by 5555194 and 5590073
     # Score will update each time the player encounters an entity
     def react_to_entity(self, entity) -> None:
+        logging.info('Player reacting to entity')
         if isinstance(entity, Snake):
             self.position = change_position_to_cell(self, entity.end_cell)
             self.snake_encountered()
@@ -438,28 +485,32 @@ class Player():
             self.position = change_position_to_cell(self, entity.end_cell)
             self.update_score(+5)
         return None
-
+    # Created by 5555194
     # A method to get the player's score
     def get_score(self) -> int:
         return self._score
-
+    # Created by 5555194
     # A method to update the player's score during the game to for display in the end
     def update_score(self, points: int = 0) -> int:
+        logging.info('Updating Player score')
         self._score += points
         return self._score
-
+    # Created by 5555194
     # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self) -> None:
+        logging.info('Player encountered a snake')
         self.num_snakes += 1
         return None
-
+    # Created by 5555194
     # A method to reset the num_snakes variable back to zero
     def reset_num_snakes(self) -> None:
+        logging.info('Resetting number of snakes encountered')
         self.num_snakes = 0
         return None
-
+    # Created by 5555194
     # A method to reset the player's score back to 100
     def reset_score(self) -> None:
+        logging.info('Resetting Player score')
         self._score = 100
         return None
 
@@ -467,7 +518,24 @@ class Player():
 # The board consists of cells, which are the squares
 # Created by 5590073
 class Cell():
+    """
+    Represents a cell on the game board.
+
+    Attributes:
+        surface (pygame.Surface): The surface representing the cell.
+        rect (pygame.Rect): The rectangle representing the cell.
+        position (list): The position of the cell on the board.
+        contents (Entity): The entity (if any) contained in the cell.
+        number (int): The number of the cell.
+    """
     def __init__(self, size=[CELL_SIZE_PIXELS, CELL_SIZE_PIXELS], position=[0, 0], contents=None):
+        """
+        Initializes the Cell with the given size, position, and contents.
+
+        size: The size of the cell in pixels.
+        position: The position of the cell on the board.
+        contents: The entity (if any) contained in the cell.
+        """
         self.surface = pg.Surface(size)
         self.rect = self.surface.get_rect()
         self.rect.topleft = position
@@ -476,15 +544,35 @@ class Cell():
         self.number = None
 
     def set_color(self, color_array):
+        """
+        Sets the color of the cell.
+
+        color_array: An array representing the color.
+        """
         self.surface.fill(color_array)
 
     def set_position(self, position_array):
+        """
+        Sets the position of the cell.
+
+        position_array: An array representing the position.
+        """
         self.position = position_array
         self.rect.topleft = position_array
 
 
 # Created by 5590073
 class ProgressBar:
+    """
+    Represents a progress bar in the game.
+
+    Attributes:
+        position (tuple): The position of the progress bar on the screen.
+        size (tuple): The size of the progress bar.
+        color (tuple): The color of the progress bar.
+        bg_color (tuple): The background color of the progress bar.
+        progress (float): The current progress, ranging from 0 to 1.
+    """
     def __init__(self, position, size, color=Color.WHITE.value, bg_color=(100, 100, 100)):
         self.position = position
         self.size = size
@@ -493,9 +581,19 @@ class ProgressBar:
         self.progress = 0  # Progress ranges from 0 to 1
 
     def update(self, progress):
+        """
+        Updates the progress of the progress bar.
+
+        progress: The new progress, ranging from 0 to 1.
+        """
         self.progress = progress
 
     def draw(self, screen):
+        """
+        Draws the progress bar on the screen.
+
+        screen: The pygame.Surface object representing the screen.
+        """
         # Draw the background
         pg.draw.rect(screen, self.bg_color, (*self.position, *self.size))
         # Draw the progress bar
@@ -504,27 +602,56 @@ class ProgressBar:
 
 # Created by 5590073
 class Timer:
+    """
+    Represents a timer in the game.
+
+    Attributes:
+        start_time (float): The start time of the timer.
+    """
     def __init__(self):
         self.start_time = time.time()
 
     def get_elapsed_time(self):
+        """
+        Returns the elapsed time since the timer was started.
+
+        The elapsed time in seconds (int).
+        """
         # Return the elapsed time in seconds (int)
         return int(time.time() - self.start_time)
 
     def draw(self):
+        """
+        Draws the timer on the screen.
+        """
         font = pg.font.Font(None, 15)
         text_surface = font.render(f"Timer: {self.get_elapsed_time()}", True, Color.WHITE.value)
         text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, 10))
         screen.blit(text_surface, text_rect)
 
     def reset(self):
+        """
+        Resets the timer to the current time.
+        """
         self.start_time = time.time()
 
 
-# Function to generate the coordinates of the cells on the board
 # Created by 5590073
-def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int = 255, start_y: int = 425) -> list[
-    list[int]]:
+def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int = 255, start_y: int = 425) -> list[list[int]]:
+    """
+    Generates a list of coordinates for a grid of cells.
+
+    The function calculates the x and y coordinates for each cell in a grid, given the number of rows and columns,
+    the size of each cell, and the starting x and y coordinates. The coordinates are calculated in pixels.
+
+    rows: The number of rows in the grid.
+    columns: The number of columns in the grid.
+    cell_size: The size of each cell in pixels.
+    start_x: The x-coordinate of the top-left cell in the grid. Defaults to 255.
+    start_y: The y-coordinate of the top-left cell in the grid. Defaults to 425.
+    return: A list of [x, y] coordinates for each cell in the grid.
+    """
+    logging.info('Generating coordinates')
     cells_coordinates = []
     gap = 5
     for row in range(rows):
@@ -534,19 +661,36 @@ def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int =
             cells_coordinates.append([x, y])
     return cells_coordinates
 
-
-# Function to change the player position to the chosen cell position
 # Created by 5590073
 def change_position_to_cell(player: Player, cell: Cell) -> tuple[int, int]:
+    """
+    Changes the position of the player to the position of a specified cell.
+
+    This function updates the player's rectangle's top-left position, the player's position attribute, 
+    and the player's current cell attribute to match the specified cell. It then returns the new top-left 
+    position of the player's rectangle.
+
+    player: The Player object whose position is to be changed.
+    cell: The Cell object to which the player's position is to be changed.
+    return: A tuple representing the new top-left position of the player's rectangle.
+    """
+    player.history_stack.append((player.position, player._score, player.moves, player.number_steps_made, player.num_snakes, player.current_cell))
+    player.number_steps_made += 1
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
     player.current_cell = cell
     return player.rect.topleft
 
-
-# Function to draw the shortest distance on the screen. value is the minimum possible number of steps.
 # Created by 5590073
 def draw_shortest_distance(value: int = 0) -> None:
+    """
+    Draws the shortest possible number of steps from start to end.
+
+    This function creates a text surface with the minimum possible number of steps, 
+    positions it at the top right corner of the screen, and then blits this surface onto the screen.
+
+    value: The minimum possible number of steps. Defaults to 0.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Minimum possible number of steps: {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
@@ -555,9 +699,16 @@ def draw_shortest_distance(value: int = 0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 
-# Function to draw the score on the screen. value is the score.
 # Created by 5590073
 def draw_score(value: int = 0) -> None:
+    """
+    Draws the current score on the screen.
+
+    This function creates a text surface with the current score, positions it at the top right corner of the screen, 
+    and then blits this surface onto the screen.
+
+    The current score. Defaults to 0.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     text_surface = font.render(f"Score: {value}", True, Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(
@@ -565,72 +716,213 @@ def draw_score(value: int = 0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
 
 
-# Function to draw the dice value on screen
 # Created by 5555194
 def draw_dice_value(value: int = 0) -> None:
+    """
+    Draws the current dice value on the screen.
+
+    This function creates a text surface with the current dice value, positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+
+    value: The current dice value. Defaults to 0.
+    """
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press SPACE to roll the dice : {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH - 35, 250))  # Position the text at the mid right
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 180))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
+def draw_number_steps_made(player) -> None:
+    """
+    Draws the number of steps made by the player on the screen.
 
-# Function to draw the restart message on screen. Guides the player.
+    This function creates a text surface with the number of steps made by the player, positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+
+    player: The Player object representing the player.
+    """
+    font = pg.font.Font(None, 15)  # Create a font object
+    text_surface = font.render(f"Number of steps made : {player.number_steps_made}", True,
+                               Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(topleft=(10, 50))  # Position the text at the mid right
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+    return None
+
 # Created by 5555194
 def draw_restart() -> None:
+    """
+    Draws a restart message on the screen.
+
+    This function creates a text surface with the message "Press R to restart", positions it at the middle right of the screen, 
+    and then blits this surface onto the screen.
+    """
     font = pg.font.Font(None, 20)  # Create a font object
     text_surface = font.render(f"Press R to restart", True,
                                Color.WHITE.value)  # Create a surface with the text
-    text_rect = text_surface.get_rect(midright=(SCREEN_WIDTH - 75, 270))  # Position the text at the mid right
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 200))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
-# Created by 5590073
-def quicksort(arr: list[int], ascending: bool = True) -> list[int]:
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    if ascending:
-        left = [x for x in arr if x < pivot]
-        middle = [x for x in arr if x == pivot]
-        right = [x for x in arr if x > pivot]
-    else:
-        left = [x for x in arr if x > pivot]
-        middle = [x for x in arr if x == pivot]
-        right = [x for x in arr if x < pivot]
-    return quicksort(left, ascending) + middle + quicksort(right, ascending)
 
-# Function to draw the past games score on the screen. past_games_score is a list of times.
-# Created by 5590073, edited by 5555194
-def draw_past_games_scores(past_games_scores: list[int]) -> None:
+# Created by 5588113
+class ListNode:
+    """A class to represent a node in a linked list."""
+
+    def __init__(self, data: int):
+        """
+        Initialize a node with the given data.
+
+        Parameters:
+            data (any): The data to be stored in the node.
+        """
+        self.data = data
+        self.next = None
+
+
+# Created by 5588113
+class LinkedList:
+    """A class to represent a linked list."""
+
+    def __init__(self):
+        """Initialize an empty linked list with a head node."""
+        self.head = None
+    
+    def add(self, data: int) -> None:
+        """
+        Add a new node with the given data to the end of the linked list.
+
+        Parameters:
+            data (any): The data to be stored in the new node.
+        """
+        new_node = ListNode(data)
+        if self.head is None:
+            self.head = new_node
+            return
+        last_node = self.head
+        while last_node.next:
+            last_node = last_node.next
+        last_node.next = new_node
+    
+    def _partition(self, start: int, end: int, ascended: bool) -> int:
+        """
+        Partition the linked list segment around a quicksort pivot element.
+
+        Parameters:
+            start (Node): The start node of the segment to partition.
+            end (Node): The end node of the segment to partition.
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+
+        Returns:
+            Node: The pivot node after partitioning.
+        """
+        # Called by _quicksort
+        pivot = start.data
+        low = start
+        high = start.next
+        
+        while high != end:
+            if ascended:
+                if high.data < pivot:
+                    low = low.next
+                    low.data, high.data = high.data, low.data
+            else:
+                if high.data > pivot:
+                    low = low.next
+                    low.data, high.data = high.data, low.data
+            high = high.next
+        
+        low.data, start.data = start.data, low.data
+        return low
+    
+    def _quicksort(self, start: int, end: int, ascended: bool) -> None:
+        """
+        Sort a linked list segment using the quick sort algorithm.
+
+        Parameters:
+            start (Node): The start node of the segment to sort.
+            end (Node): The end node of the segment to sort.
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+        """
+        # Called by sort()
+        if start != end:
+            pivot = self._partition(start, end, ascended)
+            # Recursive call
+            self._quicksort(start, pivot, ascended)
+            self._quicksort(pivot.next, end, ascended)
+    
+    def sort(self, ascended: bool = True):
+        """
+        Sort the linked list in ascending or descending order using quick sort.
+
+        Parameters:
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+        """
+        if self.head is None:
+            return
+        last_node = self.head
+        while last_node.next:
+            last_node = last_node.next
+        self._quicksort(self.head, last_node.next, ascended)
+
+
+# Created by 5590073 and 5588113, edited by 5555194
+def draw_past_games_scores(past_games_scores: LinkedList) -> None:
+    """
+    Draws the past game scores on the screen.
+
+    This function sorts the scores in descending order and displays them at the top right corner of the screen.
+
+    past_games_scores: A list of past game scores.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
-    # Sort the past games time in ascending order
-    past_games_scores = quicksort(past_games_scores, ascending=False)
-    for i, score in enumerate(past_games_scores):
-        text_surface = font.render(f"Best score {i + 1}: {score}", True,
-                                   Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(
-            topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
-        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-        y_position += 10
 
-# Function to draw the past games score on the screen. past_games_score is a list of times.
-# Created by 5590073, edited by 5555194
-def draw_past_games_times(past_games_times: list[int]) -> None:
+    # Apply quicksort the linked list
+    past_games_scores.sort(ascended=False)
+    
+    # Filter out scores less than 50
+    filtered_scores = filter(lambda x: x >= 50, past_games_scores)
+
+    # Draw the scores
+    current_node = past_games_scores.head
+    i = 1
+    while current_node:
+        score = current_node.data  # Retrieve the data from the node
+        text_surface = font.render(f"Best score {i}: {score}", True, Color.WHITE.value)
+        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))
+        screen.blit(text_surface, text_rect)
+        y_position += 10
+        current_node = current_node.next
+        i += 1
+
+
+# Created by 5590073 and 5588113
+def draw_past_games_times(past_games_times: LinkedList) -> None:
+    """
+    Draws the past game times on the screen.
+
+    This function sorts the times in ascending order and displays them at the top left corner of the screen.
+
+    past_games_times: A list of past game times.
+    """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 80
-    # Sort the past games time in ascending order
-    past_games_times = quicksort(past_games_times, ascending=True)
-    for i, time in enumerate(past_games_times):
-        text_surface = font.render(f"Best time {i + 1}: {time}", True,
-                                   Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(
-            topleft=(10, y_position))  # Position the text at the top right corner of the screen
-        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-        y_position += 10
 
+    # Apply quicksort the linked list
+    past_games_times.sort(ascended=True)
+
+    # Draw the times
+    current_node = past_games_times.head
+    i = 1
+    while current_node:
+        time = current_node.data  # Retrieve the data from the node
+        text_surface = font.render(f"Best time {i}: {time}", True, Color.WHITE.value)
+        text_rect = text_surface.get_rect(topleft=(10, y_position))
+        screen.blit(text_surface, text_rect)
+        y_position += 10
+        current_node = current_node.next
+        i += 1
 
 
 # Create a font object to render the text on the screen
@@ -639,11 +931,11 @@ font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
 clock = pg.time.Clock()
 
-
 # Created by 5590073, edited by 5588113
 def main():
     """Main game loop."""
     try:
+        logging.info('Generating coordinates')
         board = Board(ROWS, COLUMNS)
         board.set_color(Color.WHITE.value)
         board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE_PIXELS))
@@ -654,8 +946,10 @@ def main():
 
         progress_bar = ProgressBar((10, 10), (200, 20))
         timer = Timer()
-        past_games_scores = []
-        past_games_times = []
+        
+        # Asign games' scores and times as linked lists
+        past_games_scores = LinkedList()
+        past_games_times = LinkedList()
 
         # Generate snakes and ladders
         generator = Generator(board=board)
@@ -685,6 +979,7 @@ def main():
             pg.display.flip()
             clock.tick(60)
         # Quit the pygame module at the end
+        logging.info('Quitting game')
         pg.quit()
         os._exit(0)
     except Exception as e:
@@ -694,15 +989,26 @@ def main():
 
 # Created by 5590073, edited by 5555194 and 5588113
 def handle_events(player, board, timer, past_games_scores, past_games_times):
-    """Handles game events."""
+    """
+    Handles game events such as player movements, game reset, and game quit.
+
+    player: The Player object representing the player.
+    board: The Board object representing the game board.
+    timer: The Timer object representing the game timer.
+    past_games_scores: A list of scores from past games.
+    past_games_times: A list of times from past games.
+    return: False if the game is quit, True otherwise.
+    """
     for event in pg.event.get():
         if event.type == pg.QUIT:
             return False
         if event.type == pg.KEYDOWN:
             # If the key is the space bar
             if event.key == pg.K_SPACE:
+                logging.info('SPACE was pressed')
                 # Change the player position based on the dice roll
                 player.moves = roll_dice()
+                
                 current_cell_number = player.current_cell.number
                 next_cell_number = current_cell_number + player.moves
                 # Ensure that the player does not move beyond the last cell
@@ -720,10 +1026,12 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                     pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_r))
             # Reset button
             if event.key == pg.K_r:
+                logging.info('R was pressed')
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
-                    past_games_scores.append(player._score)
-                    past_games_times.append(timer.get_elapsed_time())
+                    # Add data to linked lists
+                    past_games_scores.add(player._score)
+                    past_games_times.add(timer.get_elapsed_time())
                 # Clear the board
                 board.cells_list = {}
                 board.snakes = []
@@ -742,16 +1050,27 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.update_score((-1 * player._score) + 100)
                 timer.reset()
+                player.number_steps_made = 0
                 
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.reset_score()
                 player.reset_num_snakes()
                 timer.reset()
+            if event.key == pg.K_u:
+                player.undo()
     return True
 
 
 # Created by 5590073
 def update_game_state(player):
+    """
+    Updates the game state based on the player's current cell.
+
+    If the player's current cell contains an entity and the player is at the start of the entity, 
+    the player reacts to the entity.
+
+    player: The Player object representing the player.
+    """
     if player.current_cell.contents is not None and player.current_cell == player.current_cell.contents.start_cell:
         try:
             player.react_to_entity(player.current_cell.contents)
@@ -759,9 +1078,22 @@ def update_game_state(player):
             print(f"Error reacting to entity: {e}")
 
 
-# Created by 5590073, edited by 5555194
+# Created by 5590073, edited by 5555194 and 5588113
 def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_value, past_games_times):
-    """Draws the game state."""
+    """
+    Draws the current game state on the screen.
+
+    This includes the game board, player, timer, shortest distance, score, progress bar, past game scores, 
+    past game times, dice value, and restart message.
+
+    player: The Player object representing the player.
+    board: The Board object representing the game board.
+    timer: The Timer object representing the game timer.
+    past_games_scores: A list of scores from past games.
+    progress_bar: The ProgressBar object representing the game progress bar.
+    dice_value: The current dice value.
+    past_games_times: A list of times from past games.
+    """
     try:
         # Each frame is filled with black color, so that the previous frame is not visible
         screen.fill((0, 0, 0))
@@ -793,6 +1125,7 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         progress_bar.draw(screen)
         draw_past_games_scores(past_games_scores)
         draw_past_games_times(past_games_times)
+        draw_number_steps_made(player)
         # Draw the value after rolling the dice and shows how the dice is rolled
         draw_dice_value(dice_value)
         # Draws text to player to show how to restart the game
