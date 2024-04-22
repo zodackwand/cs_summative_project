@@ -763,31 +763,111 @@ def draw_restart() -> None:
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 200))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
+  
 
-# Created by 5590073
-def quicksort(arr: list[int], ascending: bool = True) -> list[int]:
-    """
-    Sorts a list of integers in ascending or descending order using the quicksort algorithm.
+# Created by 5588113
+class ListNode:
+    """A class to represent a node in a linked list."""
 
-    arr: The list of integers to be sorted.
-    ascending: A boolean indicating whether the list should be sorted in ascending order. Defaults to True.
-    return: The sorted list of integers.
-    """
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    if ascending:
-        left = [x for x in arr if x < pivot]
-        middle = [x for x in arr if x == pivot]
-        right = [x for x in arr if x > pivot]
-    else:
-        left = [x for x in arr if x > pivot]
-        middle = [x for x in arr if x == pivot]
-        right = [x for x in arr if x < pivot]
-    return quicksort(left, ascending) + middle + quicksort(right, ascending)
+    def __init__(self, data: int):
+        """
+        Initialize a node with the given data.
 
-# Created by 5590073, edited by 5555194
-def draw_past_games_scores(past_games_scores: list[int]) -> None:
+        Parameters:
+            data (any): The data to be stored in the node.
+        """
+        self.data = data
+        self.next = None
+
+
+# Created by 5588113
+class LinkedList:
+    """A class to represent a linked list."""
+
+    def __init__(self):
+        """Initialize an empty linked list with a head node."""
+        self.head = None
+    
+    def add(self, data: int) -> None:
+        """
+        Add a new node with the given data to the end of the linked list.
+
+        Parameters:
+            data (any): The data to be stored in the new node.
+        """
+        new_node = ListNode(data)
+        if self.head is None:
+            self.head = new_node
+            return
+        last_node = self.head
+        while last_node.next:
+            last_node = last_node.next
+        last_node.next = new_node
+    
+    def _partition(self, start: int, end: int, ascended: bool) -> int:
+        """
+        Partition the linked list segment around a quicksort pivot element.
+
+        Parameters:
+            start (Node): The start node of the segment to partition.
+            end (Node): The end node of the segment to partition.
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+
+        Returns:
+            Node: The pivot node after partitioning.
+        """
+        # Called by _quicksort
+        pivot = start.data
+        low = start
+        high = start.next
+        
+        while high != end:
+            if ascended:
+                if high.data < pivot:
+                    low = low.next
+                    low.data, high.data = high.data, low.data
+            else:
+                if high.data > pivot:
+                    low = low.next
+                    low.data, high.data = high.data, low.data
+            high = high.next
+        
+        low.data, start.data = start.data, low.data
+        return low
+    
+    def _quicksort(self, start: int, end: int, ascended: bool) -> None:
+        """
+        Sort a linked list segment using the quick sort algorithm.
+
+        Parameters:
+            start (Node): The start node of the segment to sort.
+            end (Node): The end node of the segment to sort.
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+        """
+        # Called by sort()
+        if start != end:
+            pivot = self._partition(start, end, ascended)
+            # Recursive call
+            self._quicksort(start, pivot, ascended)
+            self._quicksort(pivot.next, end, ascended)
+    
+    def sort(self, ascended: bool = True):
+        """
+        Sort the linked list in ascending or descending order using quick sort.
+
+        Parameters:
+            ascended (bool): If True, sort in ascending order; otherwise, sort in descending order.
+        """
+        if self.head is None:
+            return
+        last_node = self.head
+        while last_node.next:
+            last_node = last_node.next
+        self._quicksort(self.head, last_node.next, ascended)
+
+
+# Created by 5590073 and 5588113, edited by 5555194
+def draw_past_games_scores(past_games_scores: LinkedList) -> None:
     """
     Draws the past game scores on the screen.
 
@@ -797,19 +877,28 @@ def draw_past_games_scores(past_games_scores: list[int]) -> None:
     """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
-    # Sort the past games time in ascending order
-    past_games_scores = quicksort(past_games_scores, ascending=False)
-    for i, score in enumerate(past_games_scores):
-        text_surface = font.render(f"Best score {i + 1}: {score}", True,
-                                   Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(
-            topright=(SCREEN_WIDTH - 10, y_position))  # Position the text at the top right corner of the screen
-        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+
+    # Apply quicksort the linked list
+    past_games_scores.sort(ascended=False)
+    
+    # Filter out scores less than 50
+    filtered_scores = filter(lambda x: x >= 50, past_games_scores)
+
+    # Draw the scores
+    current_node = past_games_scores.head
+    i = 1
+    while current_node:
+        score = current_node.data  # Retrieve the data from the node
+        text_surface = font.render(f"Best score {i}: {score}", True, Color.WHITE.value)
+        text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))
+        screen.blit(text_surface, text_rect)
         y_position += 10
+        current_node = current_node.next
+        i += 1
 
 
-# Created by 5590073
-def draw_past_games_times(past_games_times: list[int]) -> None:
+# Created by 5590073 and 5588113
+def draw_past_games_times(past_games_times: LinkedList) -> None:
     """
     Draws the past game times on the screen.
 
@@ -819,16 +908,21 @@ def draw_past_games_times(past_games_times: list[int]) -> None:
     """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 80
-    # Sort the past games time in ascending order
-    past_games_times = quicksort(past_games_times, ascending=True)
-    for i, time in enumerate(past_games_times):
-        text_surface = font.render(f"Best time {i + 1}: {time}", True,
-                                   Color.WHITE.value)  # Create a surface with the text
-        text_rect = text_surface.get_rect(
-            topleft=(10, y_position))  # Position the text at the top right corner of the screen
-        screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
-        y_position += 10
 
+    # Apply quicksort the linked list
+    past_games_times.sort(ascended=True)
+
+    # Draw the times
+    current_node = past_games_times.head
+    i = 1
+    while current_node:
+        time = current_node.data  # Retrieve the data from the node
+        text_surface = font.render(f"Best time {i}: {time}", True, Color.WHITE.value)
+        text_rect = text_surface.get_rect(topleft=(10, y_position))
+        screen.blit(text_surface, text_rect)
+        y_position += 10
+        current_node = current_node.next
+        i += 1
 
 # Create a font object to render the text on the screen
 # Created by 5590073
@@ -851,8 +945,10 @@ def main():
 
         progress_bar = ProgressBar((10, 10), (200, 20))
         timer = Timer()
-        past_games_scores = []
-        past_games_times = []
+        
+        # Asign games' scores and times as linked lists
+        past_games_scores = LinkedList()
+        past_games_times = LinkedList()
 
         # Generate snakes and ladders
         generator = Generator(board=board)
@@ -932,8 +1028,9 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 logging.info('R was pressed')
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
-                    past_games_scores.append(player._score)
-                    past_games_times.append(timer.get_elapsed_time())
+                    # Add data to linked lists
+                    past_games_scores.add(player._score)
+                    past_games_times.add(timer.get_elapsed_time())
                 # Clear the board
                 board.cells_list = {}
                 board.snakes = []
@@ -980,7 +1077,7 @@ def update_game_state(player):
             print(f"Error reacting to entity: {e}")
 
 
-# Created by 5590073, edited by 5555194
+# Created by 5590073, edited by 5555194 and 5588113
 def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_value, past_games_times):
     """
     Draws the current game state on the screen.
