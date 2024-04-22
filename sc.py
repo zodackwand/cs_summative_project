@@ -1,3 +1,4 @@
+# Created by 5590073
 try:
     import pygame as pg
     import random as rd
@@ -42,13 +43,11 @@ class Color(Enum):
     PLAYER_COLOR = (200, 50, 50)
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
-
-
 PLAYER_START_POSITION = [255, 425]
 
 
 # Main game board class
-# Created by 5590073
+# Created by 5590073 and 5588113
 class Board():
     """Represents the game board."""
 
@@ -60,7 +59,7 @@ class Board():
         self.snakes = []
         self.ladders = []
         self.shortest_distance = None
-
+    # Created by 5590073
     def create_cells(self, coordinates_array):
         """Creates the cells for the board."""
         number_of_cells_on_board = self.rows * self.columns
@@ -129,7 +128,7 @@ def roll_dice():
     return rd.randint(1, 6)
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Entity(ABC):
     """Represents an entity on the board."""
 
@@ -150,7 +149,7 @@ class Entity(ABC):
         pass
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Snake(Entity):
     """Represents a snake on the board."""
 
@@ -171,7 +170,7 @@ class Snake(Entity):
         return False
 
 
-# Created by 5590073 and edited by 5555194
+# Created by 5590073 and 5588113
 class Ladder(Entity):
     """Represents a ladder on the board."""
 
@@ -397,11 +396,10 @@ class Generator:
             if ladder.put_on_board():
                 board.ladders.append(ladder)
 
-    # Created by 5590073, edited by ...
 
 
+# Created by 5590073 and 5555194
 class Player():
-    # Created by 5555294
     """
         Represents the player in the game
         _score : the total score of the player (private)
@@ -409,7 +407,7 @@ class Player():
         moves: will later be the dice value when rolled
     """
 
-    # Created by ... edited by 5555194
+    # Created by 5590073, edited by 5555194
     def __init__(self, position=[0, 0], current_cell=None, tot_score=100, moves=0):
         self.surface = pg.Surface([CELL_SIZE_PIXELS, CELL_SIZE_PIXELS])
         self.rect = self.surface.get_rect()
@@ -419,15 +417,15 @@ class Player():
         self._score = tot_score
         self.moves = moves
         self.num_snakes = 0
-
+    # Created by 5590073
     def set_position(self, position_array):
         self.position = position_array
         self.rect.topleft = position_array
-
+    # Created by 5590073
     def set_color(self, color_array):
         self.surface.fill(color_array)
 
-    # Created by 5555194
+    # Created by 5555194 and 5590073
     # Score will update each time the player encounters an entity
     def react_to_entity(self, entity) -> None:
         if isinstance(entity, Snake):
@@ -438,26 +436,26 @@ class Player():
             self.position = change_position_to_cell(self, entity.end_cell)
             self.update_score(+5)
         return None
-
+    # Created by 5555194
     # A method to get the player's score
     def get_score(self) -> int:
         return self._score
-
+    # Created by 5555194
     # A method to update the player's score during the game to for display in the end
     def update_score(self, points: int = 0) -> int:
         self._score += points
         return self._score
-
+    # Created by 5555194
     # A method to keep count of how many snakes were encountered (bonus)
     def snake_encountered(self) -> None:
         self.num_snakes += 1
         return None
-
+    # Created by 5555194
     # A method to reset the num_snakes variable back to zero
     def reset_num_snakes(self) -> None:
         self.num_snakes = 0
         return None
-
+    # Created by 5555194
     # A method to reset the player's score back to 100
     def reset_score(self) -> None:
         self._score = 100
