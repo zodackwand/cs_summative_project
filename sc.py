@@ -763,7 +763,7 @@ def draw_restart() -> None:
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 200))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
-
+  
 
 # Created by 5588113
 class ListNode:
@@ -923,7 +923,6 @@ def draw_past_games_times(past_games_times: LinkedList) -> None:
         y_position += 10
         current_node = current_node.next
         i += 1
-
 
 # Create a font object to render the text on the screen
 # Created by 5590073
