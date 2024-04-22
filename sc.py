@@ -743,6 +743,7 @@ def draw_dice_value(value: int = 0) -> None:
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
 
+# Created by 5590073
 def draw_number_steps_made(player) -> None:
     """
     Draws the number of steps made by the player on the screen.
@@ -771,6 +772,21 @@ def draw_restart() -> None:
     text_surface = font.render(f"Press R to restart", True,
                                Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 200))  # Position the text at the mid right
+    screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
+    return None
+
+# Created by 5590073
+def draw_undo() -> None:
+    """
+    Draws an undo message on the screen.
+
+    This function creates a text surface with the message "Press U to undo the last move", positions it at the middle of the screen, 
+    and then blits this surface onto the screen.
+    """
+    font = pg.font.Font(None, 20)  # Create a font object
+    text_surface = font.render(f"Press U to undo the last move", True,
+                               Color.WHITE.value)  # Create a surface with the text
+    text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 220))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
   
@@ -1136,6 +1152,7 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         draw_number_steps_made(player)
         draw_dice_value(dice_value)
         draw_restart()
+        draw_undo()
     except Exception as e:
         print(f"Error drawing game state: {e}")
 
