@@ -141,10 +141,7 @@ class Board():
 
     # Created by 5588113
     def calculate_shortest_path(self, start_cell_number: int, end_cell_number: int) -> None:
-        """Calculate the shortest path between two cells using BFS.
-        
-        The shortest distance is stored in the board object.
-        """
+        """Calculate the shortest path between two cells using BFS."""
         if self.board_graph is None:
             raise ValueError("Board graph not initialized. Call create_board_graph() first.")
 
@@ -789,7 +786,7 @@ def draw_undo() -> None:
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 220))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
     return None
-  
+
 
 # Created by 5588113
 class ListNode:
@@ -893,7 +890,7 @@ class LinkedList:
 
 
 # Created by 5590073 and 5588113, edited by 5555194
-def draw_past_games_scores(past_games_scores: LinkedList) -> None:
+def draw_past_games_scores(past_games_scores: LinkedList, *args, **kwargs) -> None:
     """
     Draws the past game scores on the screen.
 
@@ -903,19 +900,22 @@ def draw_past_games_scores(past_games_scores: LinkedList) -> None:
     """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 40
-
+    head_color = kwargs.get('head_color', Color.GREEN.value)  # Get the head color from kwargs
+    
     # Apply quicksort the linked list
     past_games_scores.sort(ascended=False)
-    
-    # Filter out scores less than 50
-    filtered_scores = filter(lambda x: x >= 50, past_games_scores)
 
     # Draw the scores
     current_node = past_games_scores.head
     i = 1
     while current_node:
         score = current_node.data  # Retrieve the data from the node
-        text_surface = font.render(f"Best score {i}: {score}", True, Color.WHITE.value)
+        # Assign head color 
+        if i == 1:
+            color = head_color
+        else:
+            color = Color.WHITE.value
+        text_surface = font.render(f"Best score {i}: {score}", True, color)  # Use the appropriate color
         text_rect = text_surface.get_rect(topright=(SCREEN_WIDTH - 10, y_position))
         screen.blit(text_surface, text_rect)
         y_position += 10
@@ -924,7 +924,7 @@ def draw_past_games_scores(past_games_scores: LinkedList) -> None:
 
 
 # Created by 5590073 and 5588113
-def draw_past_games_times(past_games_times: LinkedList) -> None:
+def draw_past_games_times(past_games_times: LinkedList, *args, **kwargs) -> None:
     """
     Draws the past game times on the screen.
 
@@ -934,7 +934,8 @@ def draw_past_games_times(past_games_times: LinkedList) -> None:
     """
     font = pg.font.Font(None, 15)  # Create a font object
     y_position = 80
-
+    head_color = kwargs.get('head_color', Color.GREEN.value)  # Get the head color from kwargs
+    
     # Apply quicksort the linked list
     past_games_times.sort(ascended=True)
 
@@ -943,14 +944,21 @@ def draw_past_games_times(past_games_times: LinkedList) -> None:
     i = 1
     while current_node:
         time = current_node.data  # Retrieve the data from the node
-        text_surface = font.render(f"Best time {i}: {time}", True, Color.WHITE.value)
+        # Assign head color 
+        if i == 1:
+            color = head_color
+        else:
+            color = Color.WHITE.value
+        text_surface = font.render(f"Best time {i}: {time}", True, color)  # Use the appropriate color
         text_rect = text_surface.get_rect(topleft=(10, y_position))
         screen.blit(text_surface, text_rect)
         y_position += 10
         current_node = current_node.next
         i += 1
 
+
 # Create a font object to render the welcome text on the screen
+
 # Created by 5590073
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
@@ -1101,7 +1109,7 @@ def update_game_state(player):
             print(f"Error reacting to entity: {e}")
 
 
-# Created by 5590073, edited by 5555194 and 5588113
+# Created by 5590073, edited by 5555194
 def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_value, past_games_times):
     """
     Draws the current game state on the screen.
@@ -1146,9 +1154,8 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         progress_bar.update(progress)
         # Draw the updated progress bar on the screen
         progress_bar.draw(screen)
-        # Draw the past games scores and times, dice value, and restart message on the screen
-        draw_past_games_scores(past_games_scores)
-        draw_past_games_times(past_games_times)
+        draw_past_games_scores(past_games_scores, head_color=Color.GREEN.value)
+        draw_past_games_times(past_games_times, head_color=Color.GREEN.value)
         draw_number_steps_made(player)
         draw_dice_value(dice_value)
         draw_restart()
