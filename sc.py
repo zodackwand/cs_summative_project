@@ -39,7 +39,7 @@ COLUMNS = 10
 CELL_SIZE_PIXELS = 25
 GAP_PIXELS = 5
 
-
+# Defines an enumeration Color that represents different colors using RGB
 # Created by 5590073
 class Color(Enum):
     WHITE = (255, 255, 255)
@@ -77,7 +77,7 @@ class Board():
         self.ladders = []
         self.shortest_distance = None
     # Created by 5590073
-    def create_cells(self, coordinates_array):
+    def create_cells(self, coordinates_array) -> None:
         """
         Creates the cells for the board.
 
@@ -93,7 +93,7 @@ class Board():
             self.cells_list[i].set_color(Color.BLACK.value)
             self.cells_list[i].number = i
     # Created by 5590073
-    def update_cells(self):
+    def update_cells(self) -> None:
         """
         Updates the cells on the board. This includes updating the surface of each cell and rendering the text on each cell.
         """
@@ -106,7 +106,7 @@ class Board():
             text_rect = text_surface.get_rect(center=self.cells_list[i].rect.center)
             screen.blit(text_surface, text_rect)
     # Created by 5590073
-    def set_color(self, color_array):
+    def set_color(self, color_array) -> None:
         """
         Sets the color of the board.
 
@@ -172,7 +172,7 @@ class Entity(ABC):
     """Represents an entity on the board."""
 
     def __init__(self, start_cell=None, end_cell=None, color=None):
-        # start_cell and end_cell are objects of the Cell class
+        # start_cell and end_cell contain the same object of the Cell class
         self.start_cell = start_cell
         self.end_cell = end_cell
         self.color = color
@@ -201,6 +201,7 @@ class Snake(Entity):
 
     def put_on_board(self) -> bool:
         """Places the snake on the board."""
+        # Check if the start and end cells are empty and not the same
         if self.start_cell.contents == None and self.end_cell.contents == None and self.start_cell != self.end_cell:
             self.start_cell.contents = self
             self.end_cell.contents = self
@@ -222,6 +223,7 @@ class Ladder(Entity):
 
     def put_on_board(self) -> bool:
         """Places the ladder on the board."""
+        # Check if the start and end cells are empty and not the same
         if self.start_cell.contents == None and self.end_cell.contents == None and self.start_cell != self.end_cell:
             self.start_cell.contents = self
             self.end_cell.contents = self
@@ -443,9 +445,15 @@ class Generator:
 class Player():
     """
         Represents the player on the board
+
         _score : the total score of the player (private)
         num_snakes: how many snakes the player encounters during the game (if 0 points will double in the end)
         moves: will later be the dice value when rolled
+        number_steps_made: how many steps the player has made
+        history_stack: a stack to keep track of the player's move history
+        rect: the rectangle representing the player
+        rect.topleft: the top left corner of the rectangle (for positining)
+        surface: the surface representing the player (like a skin)
     """
 
     # Created by 5590073 edited by 5555194
@@ -469,7 +477,11 @@ class Player():
         self.surface.fill(color_array)
 
     def undo(self):
+        """
+        Undo the last move made by the player.
+        """
         if self.history_stack:
+            # Restore the previous state including position, score, moves, number of steps made, number of snakes encountered and current cell
             self.position, self._score, self.moves, self.number_steps_made, self.num_snakes, self.current_cell = self.history_stack.pop()
             self.rect.topleft = self.position
 
@@ -527,14 +539,11 @@ class Cell():
         position (list): The position of the cell on the board.
         contents (Entity): The entity (if any) contained in the cell.
         number (int): The number of the cell.
+        size: The size of the cell in pixels.
     """
     def __init__(self, size=[CELL_SIZE_PIXELS, CELL_SIZE_PIXELS], position=[0, 0], contents=None):
         """
         Initializes the Cell with the given size, position, and contents.
-
-        size: The size of the cell in pixels.
-        position: The position of the cell on the board.
-        contents: The entity (if any) contained in the cell.
         """
         self.surface = pg.Surface(size)
         self.rect = self.surface.get_rect()
@@ -595,6 +604,7 @@ class ProgressBar:
         screen: The pygame.Surface object representing the screen.
         """
         # Draw the background
+        # * unpacks the tuple into individual arguments
         pg.draw.rect(screen, self.bg_color, (*self.position, *self.size))
         # Draw the progress bar
         pg.draw.rect(screen, self.color, (*self.position, self.size[0] * self.progress, self.size[1]))
@@ -603,7 +613,7 @@ class ProgressBar:
 # Created by 5590073
 class Timer:
     """
-    Represents a timer in the game.
+    Represents a timer in the game using time library.
 
     Attributes:
         start_time (float): The start time of the timer.
@@ -647,13 +657,12 @@ def generate_coordinates(rows: int, columns: int, cell_size: int, start_x: int =
     rows: The number of rows in the grid.
     columns: The number of columns in the grid.
     cell_size: The size of each cell in pixels.
-    start_x: The x-coordinate of the top-left cell in the grid. Defaults to 255.
-    start_y: The y-coordinate of the top-left cell in the grid. Defaults to 425.
+    start_x: The x-coordinate of the start in the grid. Defaults to 255.
+    start_y: The y-coordinate of the start in the grid. Defaults to 425.
     return: A list of [x, y] coordinates for each cell in the grid.
     """
     logging.info('Generating coordinates')
     cells_coordinates = []
-    gap = 5
     for row in range(rows):
         for col in range(columns):
             x = start_x + (cell_size + GAP_PIXELS) * col
@@ -667,15 +676,16 @@ def change_position_to_cell(player: Player, cell: Cell) -> tuple[int, int]:
     Changes the position of the player to the position of a specified cell.
 
     This function updates the player's rectangle's top-left position, the player's position attribute, 
-    and the player's current cell attribute to match the specified cell. It then returns the new top-left 
-    position of the player's rectangle.
+    and the player's current cell attribute to match the specified cell.
 
     player: The Player object whose position is to be changed.
     cell: The Cell object to which the player's position is to be changed.
     return: A tuple representing the new top-left position of the player's rectangle.
     """
+    # Save the current state of the player before moving to a new cell
     player.history_stack.append((player.position, player._score, player.moves, player.number_steps_made, player.num_snakes, player.current_cell))
     player.number_steps_made += 1
+    # Move the player to the new cell
     player.rect.topleft = cell.rect.topleft
     player.position = cell.position
     player.current_cell = cell
@@ -721,13 +731,13 @@ def draw_dice_value(value: int = 0) -> None:
     """
     Draws the current dice value on the screen.
 
-    This function creates a text surface with the current dice value, positions it at the middle right of the screen, 
+    This function creates a text surface with the current dice value, positions it at the middle of the screen, 
     and then blits this surface onto the screen.
 
     value: The current dice value. Defaults to 0.
     """
     font = pg.font.Font(None, 20)  # Create a font object
-    text_surface = font.render(f"Press SPACE to roll the dice : {value}", True,
+    text_surface = font.render(f"Press SPACE to roll the dice: {value}", True,
                                Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 180))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
@@ -737,13 +747,13 @@ def draw_number_steps_made(player) -> None:
     """
     Draws the number of steps made by the player on the screen.
 
-    This function creates a text surface with the number of steps made by the player, positions it at the middle right of the screen, 
+    This function creates a text surface with the number of steps made by the player, positions it at the left of the screen, 
     and then blits this surface onto the screen.
 
     player: The Player object representing the player.
     """
     font = pg.font.Font(None, 15)  # Create a font object
-    text_surface = font.render(f"Number of steps made : {player.number_steps_made}", True,
+    text_surface = font.render(f"Number of steps made: {player.number_steps_made}", True,
                                Color.WHITE.value)  # Create a surface with the text
     text_rect = text_surface.get_rect(topleft=(10, 50))  # Position the text at the mid right
     screen.blit(text_surface, text_rect)  # Blit the text surface onto the screen
@@ -754,7 +764,7 @@ def draw_restart() -> None:
     """
     Draws a restart message on the screen.
 
-    This function creates a text surface with the message "Press R to restart", positions it at the middle right of the screen, 
+    This function creates a text surface with the message "Press R to restart", positions it at the middle of the screen, 
     and then blits this surface onto the screen.
     """
     font = pg.font.Font(None, 20)  # Create a font object
@@ -924,7 +934,7 @@ def draw_past_games_times(past_games_times: LinkedList) -> None:
         current_node = current_node.next
         i += 1
 
-# Create a font object to render the text on the screen
+# Create a font object to render the welcome text on the screen
 # Created by 5590073
 font = pg.font.Font(None, 36)
 font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHITE.value)
@@ -935,6 +945,7 @@ def main():
     """Main game loop."""
     try:
         logging.info('Generating coordinates')
+        # Initialize the board, player, progress bar, and timer
         board = Board(ROWS, COLUMNS)
         board.set_color(Color.WHITE.value)
         board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE_PIXELS))
@@ -963,6 +974,7 @@ def main():
         # Created by 5590073
         running = True
         while running:
+            # Handle events such as player movements, game reset and game quit
             running = handle_events(player, board, timer, past_games_scores, past_games_times)
             if running:
                 draw_game_state(player,
@@ -974,7 +986,7 @@ def main():
                                 past_games_times)
                 update_game_state(player)
 
-            # Update the display and set the frame rate
+            # Update the display and set the frame rate to 60 FPS to ensure smooth gameplay
             pg.display.flip()
             clock.tick(60)
         # Quit the pygame module at the end
@@ -1002,12 +1014,11 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
         if event.type == pg.QUIT:
             return False
         if event.type == pg.KEYDOWN:
-            # If the key is the space bar
+            # If the key is the SPACE bar
             if event.key == pg.K_SPACE:
                 logging.info('SPACE was pressed')
                 # Change the player position based on the dice roll
                 player.moves = roll_dice()
-                
                 current_cell_number = player.current_cell.number
                 next_cell_number = current_cell_number + player.moves
                 # Ensure that the player does not move beyond the last cell
@@ -1018,15 +1029,14 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                     # Special bonus (if player doesn't encounter any snakes score is doubled)
                     if player.num_snakes == 0:
                         player.update_score(player.get_score())
-                        # Increment the snake number so the score doesn't double if the player rolls the dice again
-                        # at cell 100
+                        # Increment the snake number so the score doesn't double if the player rolls the dice again at cell 100
                         player.snake_encountered()
-                    # Simulate pressing the reset button
+                    # Simulate pressing the reset button to restart the game when the player reaches the last cell
                     pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_r))
             # Reset button
             if event.key == pg.K_r:
                 logging.info('R was pressed')
-                # Record the total score only if the player reaches the last cell
+                # Record the total score and time only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
                     # Add data to linked lists
                     past_games_scores.add(player._score)
@@ -1045,16 +1055,14 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                 board.create_board_graph()
                 # Recalculate the shortest path
                 shortest_path_length = board.calculate_shortest_path(start_cell_number=1, end_cell_number=ROWS*COLUMNS)            
-                # Reset player position and score
-                player.position = change_position_to_cell(player, board.cells_list[1])
+                # Reset player position, score, number of snakes encountered, timer, and number of steps made
                 player.update_score((-1 * player._score) + 100)
                 timer.reset()
                 player.number_steps_made = 0
-                
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.reset_score()
                 player.reset_num_snakes()
-                timer.reset()
+            # Undo button
             if event.key == pg.K_u:
                 player.undo()
     return True
@@ -1101,7 +1109,7 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         board.update_cells()
         # Draw the player on the screen
         screen.blit(player.surface, player.rect)
-        # Draw the font on the screen
+        # Draw the font on the screen with the welcome message
         screen.blit(font_surface, (175, 50))
         # Draw the timer on the screen
         timer.draw()
@@ -1117,17 +1125,16 @@ def draw_game_state(player, board, timer, past_games_scores, progress_bar, dice_
         for ladder in board.ladders:
             ladder.draw()
 
-        # Create and update the progress bar
+        # Update the progress bar
         progress = player.current_cell.number / len(board.cells_list)
         progress_bar.update(progress)
         # Draw the updated progress bar on the screen
         progress_bar.draw(screen)
+        # Draw the past games scores and times, dice value, and restart message on the screen
         draw_past_games_scores(past_games_scores)
         draw_past_games_times(past_games_times)
         draw_number_steps_made(player)
-        # Draw the value after rolling the dice and shows how the dice is rolled
         draw_dice_value(dice_value)
-        # Draws text to player to show how to restart the game
         draw_restart()
     except Exception as e:
         print(f"Error drawing game state: {e}")
