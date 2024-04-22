@@ -5,6 +5,7 @@ try:
     import numpy as np
     import time
     from enum import Enum
+    from collections import deque
     import os
 except ImportError as e:
     print(f"Import error: {e}")
@@ -58,6 +59,7 @@ class Board():
         self.surface = pg.Surface((rows * (cell_size + gap) + gap, rows * (cell_size + gap) + gap))
         self.snakes = []
         self.ladders = []
+        self.shortest_distance = None
 
     def create_cells(self, coordinates_array):
         """Creates the cells for the board."""
@@ -82,6 +84,44 @@ class Board():
 
     def set_color(self, color_array):
         self.surface.fill(color_array)
+    
+    # Created by 5588113  
+    def create_board_graph(self) -> dict:
+        """Create a graph representing connections between cells."""
+        board_graph = {}
+        for cell_number, cell in self.cells_list.items():
+            board_graph[cell_number] = []
+            # If ladder detected and node is not an end_cell, append ladder's end to the node
+            if cell.contents is not None and isinstance(cell.contents, Ladder) and cell_number != cell.contents.end_cell.number:
+                board_graph[cell_number].append(cell.contents.end_cell.number)
+            else:
+                for i in range(1, 7):  # Possible dice roll values
+                    next_cell_number = cell_number + i
+                    if next_cell_number <= 100:
+                        if self.cells_list[next_cell_number].contents is not None:
+                            next_cell_number = self.cells_list[next_cell_number].contents.end_cell.number
+                        board_graph[cell_number].append(next_cell_number)
+        self.board_graph = board_graph  # Store board graph in the board object
+        return board_graph
+
+    # Created by 5588113
+    def calculate_shortest_path(self, start_cell_number: int, end_cell_number: int) -> None:
+        """Calculate the shortest path between two cells using BFS."""
+        if self.board_graph is None:
+            raise ValueError("Board graph not initialized. Call create_board_graph() first.")
+
+        visited = set()
+        queue = deque([(start_cell_number, 0)])  # (cell_number, distance)
+        while queue:
+            cell_number, distance = queue.popleft()
+            if cell_number == end_cell_number:
+                self.shortest_distance = distance
+                return
+            visited.add(cell_number)
+            for neighbor_cell in self.board_graph[cell_number]:
+                if neighbor_cell not in visited:
+                    queue.append((neighbor_cell, distance + 1))
+        return # No path found
 
 
 # Created by 5590073
@@ -152,61 +192,157 @@ class Ladder(Entity):
         return False
 
 
+# Created by 5588113
 class Generator:
+    """This class manages the creation of snakes and ladders on the game board. It controls the percentage of the board
+        covered with entities and shapes their placement to keep the player engaged while maintaining randomness.
+        
+        E.g. preventing creation of entities that are too long or placed horizontally.
+    """
+    
+    def __init__(self, board: Board):
+        """Initialize the Generator.
+        
+        Args:
+            board (Board): The class Board attribute
+            
+        Attributes:
+            rows (int): Number of rows in the game board.
+            columns (int): Number of columns in the game board.
+            entity_matrices (list): A list to store matrices that incluede cells on which the entities are placed.
+            
+        Data structures:
+            Dictionary/Hashmap
+            List/Array
+            2D List (matrix)
+                
+        Methods:
+            _board_cells_to_matrix (protected): Converts the class Board's cells to a matrix.
+            _create_null_matrices (protected): Creates a set of null matrices ranging from 3x2 to 5x5 that reserve spaces for entities.
+            _put_null_matrix (protected): Indicates, whether a specific place can be reserved for an entity.
+            _smooth_placement (protected): Controls the entities coverage.
+            _get_entities_coordinates (protected): Get values of opposite corners from entity matrices
+            
+            create_snakes_on_board (public): Receive coordinates for snakes and asign them with class Cell
+            create_ladders_on_board (pulic): Receive coordinates for ladders and asign them with class Cell
+            
+        Example private methods procedure:
+        
+            Board matrix (10x10), null matrices placed:
 
-    def __init__(self, rows: int, columns: int, board):
-        self.rows = rows
-        self.columns = columns
-        self.cells_list = board.cells_list
+                [[ 91  92  93  94  95  96  97  98  99 100]
+                [ 81  82  83  84  85  86  87  88  89  90]
+                [ 71  72   0   0   0  76  77  78  79  80]
+                [ 61  62   0   0   0  66  67  68  69   0]
+                [ 51  52   0   0   0  56  57  58  59   0]
+                [ 41  42   0   0   0   0   0  48  49   0]
+                [ 31  32  33  34  35   0   0  38  39  40]
+                [ 21  22   0   0   0   0   0  28  29  30]
+                [ 11  12   0   0   0  16  17  18  19  20]
+                [  1   2   0   0   0   6   7   8   9  10]]
+
+            Extracted entity Matrices according to null matrices positions:
+            
+                [ 75 ]   [ 70 ]   [ 23  24  25 ]   [ 73  74 ]   [ 46  47 ]
+                [ 65 ]   [ 60 ]   [ 13  14  15 ]   [ 63  64 ]   [ 36  37 ]
+                [ 55 ]   [ 50 ]   [  3   4   5 ]   [ 53  54 ]   [ 26  27 ]
+                [ 45 ]                             [ 43  44 ]
+            
+            Extracted coordinates list: [[45, 75], [50, 70], [5, 23] [43, 74], [26, 47]]
+        """
+        self.board = board
+        self.rows = board.rows
+        self.columns = board.columns
         self.entity_matrices = []
 
-    def board_cells_to_matrix(self) -> list:
+    def _board_cells_to_matrix(self) -> np.ndarray:
+        """
+        Convert board cells to a matrix.
+
+        Returns:
+            np.ndarray: The matrix representing the board cells.
+        """
+        # Called by: _smooth_placement()
         board_matrix = np.zeros((self.rows, self.columns), dtype=int)
-        for key, value in self.cells_list.items():
+        for key, value in self.board.cells_list.items():
             row = (key - 1) // self.columns
             column = (key - 1) % self.columns
             board_matrix[row, column] = key
         return np.flipud(board_matrix)
 
-    def create_null_matrices(self) -> list:
+    def _create_null_matrices(self) -> list:
+        """
+        Create a set of null matrices ranging from 3x2 to 5x5 that reserve spaces for entities.
+        
+        Returns:
+            list: A list of null matrices.
+        """
+        # Called by: _smooth_placement()
         null_matrices = []
         for i in range(3, 6):
-            for j in range(1, 3):
+            for j in range(2, 6):
                 null_matrices.append(np.zeros((i, j)))
         return null_matrices
 
-    def put_entity_matrix(self, board_matrix, null_matrix) -> bool:
+    def _put_null_matrix(self, board_matrix, null_matrix) -> bool:
+        """
+        Indicates whether a specific place can be reserved for an entity.
+
+        Args:
+            board_matrix (np.ndarray): The current state of the board matrix.
+            null_matrix (np.ndarray): The null matrix representing the entity to be placed.
+
+        Returns:
+            bool: True if the entity can be placed, False otherwise.
+        """
+        # Called by: _smooth_placement()
         entity_rows, entity_columns = null_matrix.shape
         row_start = rd.randint(0, self.rows - entity_rows)
         column_start = rd.randint(0, self.columns - entity_columns)
+        restricted_cells = [0, 1, self.rows * self.columns]
 
-        if np.all(board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] != 0):
-            self.entity_matrices.append(board_matrix[row_start: row_start + entity_rows,
-                                        column_start: column_start + entity_columns].copy())
-            board_matrix[row_start: row_start + entity_rows,
-            column_start: column_start + entity_columns] = null_matrix
-            return True
+        selected_cells = board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns]
+        # Avoid placing null matrix on start/end cell and on other null matrices
+        if np.all(selected_cells != 0) and not np.any(np.isin(selected_cells, restricted_cells)):
+            # Form entitiy matrix and put it in the list if placed succesfully
+            self.entity_matrices.append(selected_cells.copy())
+            board_matrix[row_start: row_start + entity_rows, column_start: column_start + entity_columns] = null_matrix
+            return True 
 
-        return False
+        return False 
 
-    def smooth_placement(self) -> None:
-        board_matrix = self.board_cells_to_matrix()
+    def _smooth_placement(self) -> None:
+        """
+        Controls the entities coverage by adjusting the coverage percentage.
+
+        This method is called by:
+            - _get_entities_coordinates()
+        """
+        # Called by: create_snakes_on_board(), create_ladders_on_board()
+        board_matrix = self._board_cells_to_matrix()
         total_elements = board_matrix.size
+        # Ensure 70% coverage
         target_elements = int(total_elements * 0.7)
-        null_matrices = self.create_null_matrices()
+        null_matrices = self._create_null_matrices()
         rd.shuffle(null_matrices)
 
         elements_covered = 0
         for null_matrix in null_matrices:
             if elements_covered + null_matrix.size <= target_elements:
-                if self.put_entity_matrix(board_matrix, null_matrix):
+                if self._put_null_matrix(board_matrix, null_matrix):
                     elements_covered += null_matrix.size
             else:
                 break
 
-    def get_entities_coordinates(self) -> list:
+    def _get_entities_coordinates(self) -> list:
+        """
+        Get values of opposite corners from entity matrices.
+
+        Returns:
+            list: A list containing coordinates of entities' corners.
+        """
         entities_coordinates = []
-        self.smooth_placement()
+        self._smooth_placement()
 
         for entity_matrix in self.entity_matrices:
             rows, columns = entity_matrix.shape
@@ -231,6 +367,35 @@ class Generator:
             entities_coordinates.append([bottom_corner, top_corner])
 
         return entities_coordinates
+    
+    def create_snakes_on_board(self, board: Board) -> None:
+        """
+        Create snakes on the game board based on the coordinates obtained from _get_entities_coordinates.
+
+        Args:
+            board (Board): The game board where the snakes will be placed.
+        """
+        snakes_coordinates = self._get_entities_coordinates
+        for cells in self._get_entities_coordinates():
+            bottom_coordinate, top_coordinate = cells
+            
+            snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
+            if snake.put_on_board():
+                board.snakes.append(snake)
+
+    def create_ladders_on_board(self, board: Board) -> None:
+        """
+        Create ladders on the game board based on the coordinates obtained from _get_entities_coordinates.
+
+        Args:
+            board (Board): The game board where the ladders will be placed.
+        """
+        for cells in self._get_entities_coordinates():
+            bottom_coordinate, top_coordinate = cells
+            
+            ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
+            if ladder.put_on_board():
+                board.ladders.append(ladder)
 
     # Created by 5590073, edited by ...
 
@@ -456,7 +621,7 @@ font_surface = font.render("Welcome to the Snakes and Ladders", False, Color.WHI
 clock = pg.time.Clock()
 
 
-# Created by 5590073, edited by ...
+# Created by 5590073, edited by 5588113
 def main():
     """Main game loop."""
     try:
@@ -472,26 +637,16 @@ def main():
         timer = Timer()
         past_games_scores = []
 
-        generator = Generator(ROWS, COLUMNS, board=board)
-        snakes_coordinates = generator.get_entities_coordinates()
-        ladders_coordinates = generator.get_entities_coordinates()
+        # Generate snakes and ladders
+        generator = Generator(board=board)
+        generator.create_snakes_on_board(board=board)
+        generator.create_ladders_on_board(board=board)
 
-        # Create snakes
-        for cells in snakes_coordinates:
-            bottom_coordinate, top_coordinate = cells
-
-            snake = Snake(start_cell=board.cells_list[top_coordinate], end_cell=board.cells_list[bottom_coordinate])
-            if snake.put_on_board():
-                board.snakes.append(snake)
-
-        # Create ladders       
-        for cells in ladders_coordinates:
-            bottom_coordinate, top_coordinate = cells
-
-            ladder = Ladder(start_cell=board.cells_list[bottom_coordinate], end_cell=board.cells_list[top_coordinate])
-            if ladder.put_on_board():
-                board.ladders.append(ladder)
-
+        # Create the adjacency list
+        board.create_board_graph()
+        # Calculate the shortest path
+        shortest_path_length = board.calculate_shortest_path(start_cell_number=1, end_cell_number=ROWS*COLUMNS)
+        
         # Created by 5590073
         running = True
         while running:
@@ -512,8 +667,7 @@ def main():
         pg.quit()
         os._exit(0)
 
-
-# Created by 5590073, edited by 5555194
+# Created by 5590073, edited by 5555194 and 5588113
 def handle_events(player, board, timer, past_games_scores):
     """Handles game events."""
     for event in pg.event.get():
@@ -541,7 +695,26 @@ def handle_events(player, board, timer, past_games_scores):
             if event.key == pg.K_r:
                 # Record the total score only if the player reaches the last cell
                 if player.current_cell == board.cells_list[100]:
-                    past_games_scores.append(player.get_score())
+                    past_games_scores.append(player._score)
+                # Clear the board
+                board.cells_list = {}
+                board.snakes = []
+                board.ladders = []
+                # Recreate cells and entities
+                board.create_cells(generate_coordinates(board.rows, board.columns, CELL_SIZE_PIXELS))
+                # Regenerate snakes and ladders
+                generator = Generator(board=board)
+                generator.create_snakes_on_board(board=board)
+                generator.create_ladders_on_board(board=board)
+                # Recreate the adjacency list
+                board.create_board_graph()
+                # Recalculate the shortest path
+                shortest_path_length = board.calculate_shortest_path(start_cell_number=1, end_cell_number=ROWS*COLUMNS)            
+                # Reset player position and score
+                player.position = change_position_to_cell(player, board.cells_list[1])
+                player.update_score((-1 * player._score) + 100)
+                timer.reset()
+                
                 player.position = change_position_to_cell(player, board.cells_list[1])
                 player.reset_score()
                 player.reset_num_snakes()
@@ -574,7 +747,7 @@ def draw_game_state(player, board, timer, past_games_scores, snakes, ladders, pr
         # Draw the timer on the screen
         timer.draw()
         # Draw the shortest distance on the screen
-        draw_shortest_distance()
+        draw_shortest_distance(board.shortest_distance)
         # Draw the score on the screen
         draw_score(player.get_score())
 
