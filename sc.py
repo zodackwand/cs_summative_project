@@ -716,6 +716,8 @@ def handle_events(player, board, timer, past_games_scores, past_games_times):
                         # Increment the snake number so the score doesn't double if the player rolls the dice again
                         # at cell 100
                         player.snake_encountered()
+                    # Simulate pressing the reset button
+                    pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_r))
             # Reset button
             if event.key == pg.K_r:
                 # Record the total score only if the player reaches the last cell
